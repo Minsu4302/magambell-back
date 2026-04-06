@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.magambell.server.auth.domain.ProviderType;
 import com.magambell.server.goods.domain.repository.GoodsRepository;
 import com.magambell.server.notification.app.port.in.request.SaveFcmTokenServiceRequest;
+import com.magambell.server.notification.app.port.in.request.DeleteStoreOpenFcmTokenServiceRequest;
 import com.magambell.server.notification.app.port.in.request.SaveStoreOpenFcmTokenServiceRequest;
+import com.magambell.server.notification.adapter.in.web.CheckStoreOpenServiceRequest;
 import com.magambell.server.notification.domain.entity.FcmToken;
 import com.magambell.server.notification.domain.repository.FcmTokenRepository;
 import com.magambell.server.stock.domain.repository.StockHistoryRepository;
@@ -130,5 +132,48 @@ class NotificationServiceTest {
         List<FcmToken> fcmTokenList = fcmTokenRepository.findAll();
         assertThat(fcmTokenList.size()).isEqualTo(1);
         assertThat(fcmTokenList.get(0).getToken()).isEqualTo("testToken");
+    }
+
+    @DisplayName("구독 여부가 false여도 동일 디바이스 토큰의 매장 구독은 취소된다.")
+    @Test
+    void deleteStoreOpenTokenWhenSubscribedFalseButSameDeviceTokenExists() {
+        // given
+        String sharedToken = "sharedDeviceToken";
+        notificationService.saveToken(new SaveFcmTokenServiceRequest(sharedToken, user.getId()));
+
+        User anotherUser = createAndSaveUser("other@test.com", "otherSocialId", "다른닉네임", "01056781234");
+        notificationService.saveStoreOpenToken(
+            new SaveStoreOpenFcmTokenServiceRequest(store.getId(), sharedToken, anotherUser.getId()));
+
+        boolean subscribed = notificationService.checkUserStoreOpen(
+            new CheckStoreOpenServiceRequest(store.getId(), user.getId()));
+        assertThat(subscribed).isFalse();
+
+        // when
+        notificationService.deleteStoreOpenToken(
+            new DeleteStoreOpenFcmTokenServiceRequest(store.getId(), user.getId()));
+
+        // then
+        long remainStoreOpenSubscriptions = fcmTokenRepository.findAll().stream()
+            .filter(token -> token.getStore() != null && token.getStore().getId().equals(store.getId()))
+            .count();
+
+        assertThat(remainStoreOpenSubscriptions).isZero();
+    }
+
+    private User createAndSaveUser(final String email, final String socialId, final String nickName,
+            final String phoneNumber) {
+        UserSocialAccountDTO userSocialAccountDTO = new UserSocialAccountDTO(
+            email,
+            "테스트이름",
+            nickName,
+            phoneNumber,
+            ProviderType.KAKAO,
+            socialId,
+            UserRole.OWNER);
+
+        User anotherUser = userSocialAccountDTO.toUser();
+        anotherUser.addUserSocialAccount(userSocialAccountDTO.toUserSocialAccount());
+        return userRepository.save(anotherUser);
     }
 }

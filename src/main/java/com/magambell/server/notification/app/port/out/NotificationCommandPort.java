@@ -11,4 +11,8 @@ public interface NotificationCommandPort {
     void deleteUserAndStoreIsNull(User user);
 
     void delete(FcmToken fcmToken);
+
+    long deleteByStoreIdAndUserId(Long storeId, Long userId);
+
+    long deleteByStoreIdAndToken(Long storeId, String token);
 }
