@@ -558,7 +558,11 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     private BooleanExpression availableNowCondition(SearchStoreListServiceRequest request) {
         if (Boolean.TRUE.equals(request.onlyAvailable())) {
-            return stock.quantity.gt(0);
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+            return stock.quantity.gt(0)
+                    .and(goods.saleStatus.eq(SaleStatus.ON))
+                    .and(goods.startTime.loe(now))
+                    .and(goods.endTime.goe(now));
         }
         return null;
     }
