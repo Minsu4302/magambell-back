@@ -8,7 +8,7 @@ public record SearchStoreListRequest(
         Double latitude,
         Double longitude,
         String keyword,
-        SearchSortType sortType,
+    String sortType,
     String sort,
         Boolean onlyAvailable,
 
@@ -31,15 +31,50 @@ public record SearchStoreListRequest(
     }
 
     private SearchSortType resolveSortType() {
-        if (sortType != null) {
-            return sortType;
+        SearchSortType parsedSortType = parseSort(sortType);
+        if (parsedSortType != null) {
+            return parsedSortType;
         }
-        if (sort == null || sort.isBlank()) {
+        SearchSortType parsedSort = parseSort(sort);
+        if (parsedSort != null) {
+            return parsedSort;
+        }
+        return null;
+    }
+
+    private SearchSortType parseSort(String rawSort) {
+        if (rawSort == null || rawSort.isBlank()) {
             return null;
         }
 
-        String normalized = sort.trim().toUpperCase();
-        return switch (normalized) {
+        String normalized = rawSort.trim();
+        String upper = normalized.toUpperCase();
+
+        // 숫자/한글/영문 혼합 클라이언트 파라미터를 모두 허용
+        if ("기본순".equals(normalized) || "최신순".equals(normalized)) {
+            return SearchSortType.RECENT_DESC;
+        }
+        if ("가격낮은순".equals(normalized)) {
+            return SearchSortType.PRICE_ASC;
+        }
+        if ("가까운순".equals(normalized) || "거리순".equals(normalized)) {
+            return SearchSortType.DISTANCE_ASC;
+        }
+        if ("리뷰많은순".equals(normalized) || "리뷰순".equals(normalized)) {
+            return SearchSortType.POPULAR_DESC;
+        }
+
+        if ("1".equals(normalized)) {
+            return SearchSortType.RECENT_DESC;
+        }
+        if ("2".equals(normalized)) {
+            return SearchSortType.PRICE_ASC;
+        }
+        if ("3".equals(normalized)) {
+            return SearchSortType.POPULAR_DESC;
+        }
+
+        return switch (upper) {
             case "RECENT_DESC", "RECENT", "LATEST", "LATEST_DESC" -> SearchSortType.RECENT_DESC;
             case "PRICE_ASC", "LOW_PRICE", "PRICE_LOW" -> SearchSortType.PRICE_ASC;
             case "DISTANCE_ASC", "DISTANCE", "NEAR" -> SearchSortType.DISTANCE_ASC;
