@@ -34,7 +34,7 @@ public record SearchStoreListRequest(
     }
 
     private SearchSortType resolveSortType() {
-        for (String candidate : java.util.List.of(sortType, sort, sortBy, orderBy, sortOption)) {
+        for (String candidate : java.util.Arrays.asList(sortType, sort, sortBy, orderBy, sortOption)) {
             SearchSortType parsed = parseSort(candidate);
             if (parsed != null) {
                 return parsed;
