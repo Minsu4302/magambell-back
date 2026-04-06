@@ -49,6 +49,11 @@ public record SearchStoreListRequest(
 
         String normalized = rawSort.trim();
         String upper = normalized.toUpperCase();
+        String compact = upper
+                .replace(" ", "")
+                .replace("_", "")
+                .replace("-", "")
+                .replace("+", "");
 
         // 숫자/한글/영문 혼합 클라이언트 파라미터를 모두 허용
         if ("기본순".equals(normalized) || "최신순".equals(normalized)) {
@@ -61,6 +66,12 @@ public record SearchStoreListRequest(
             return SearchSortType.DISTANCE_ASC;
         }
         if ("리뷰많은순".equals(normalized) || "리뷰순".equals(normalized)) {
+            return SearchSortType.POPULAR_DESC;
+        }
+
+        // 구분자/접두어가 섞인 문자열도 폭넓게 처리
+        if (normalized.contains("리뷰") || upper.contains("REVIEW") || upper.contains("POPULAR")
+                || compact.contains("REVIEW") || compact.contains("POPULAR")) {
             return SearchSortType.POPULAR_DESC;
         }
 
