@@ -78,8 +78,20 @@ public class NotificationService implements NotificationUseCase {
     @Transactional
     @Override
     public void deleteStoreOpenToken(final DeleteStoreOpenFcmTokenServiceRequest request) {
-        FcmToken fcmToken = notificationQueryPort.findByUserIdAndStoreId(request.storeId(), request.userId());
-        notificationCommandPort.delete(fcmToken);
+        User user = userQueryPort.findById(request.userId());
+
+        long deletedByUserAndStore = notificationCommandPort.deleteByStoreIdAndUserId(request.storeId(), request.userId());
+
+        long deletedByTokenAndStore = 0;
+        FcmTokenDTO currentDeviceToken = notificationQueryPort.findWithAllByUserIdAndStoreIsNull(user);
+        if (currentDeviceToken != null && currentDeviceToken.token() != null
+            && !currentDeviceToken.token().isBlank()) {
+            deletedByTokenAndStore = notificationCommandPort.deleteByStoreIdAndToken(
+                request.storeId(), currentDeviceToken.token());
+        }
+
+        log.info("매장 오픈 알림 구독 취소 처리 완료 - storeId: {}, userId: {}, deletedByUserAndStore: {}, deletedByTokenAndStore: {}",
+            request.storeId(), request.userId(), deletedByUserAndStore, deletedByTokenAndStore);
     }
 
     @Override

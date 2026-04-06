@@ -10,6 +10,10 @@ public interface FcmTokenRepository extends JpaRepository<FcmToken, Long>, FcmTo
 
     void deleteByUserIdAndStoreIsNull(Long userId);
 
+    long deleteByStoreIdAndUserId(Long storeId, Long userId);
+
+    long deleteByStoreIdAndToken(Long storeId, String token);
+
     List<FcmToken> findByUserId(Long userId);
 
     Optional<FcmToken> findByStoreIdAndUserId(Long storeId, Long userId);
