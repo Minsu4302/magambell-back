@@ -133,7 +133,7 @@ class StoreServiceTest {
     void getStoreList() {
         // given
         SearchStoreListServiceRequest request = new SearchStoreListServiceRequest(
-                37.5665, 37.5665, "", SearchSortType.RECENT_DESC, true, 1, 30
+                37.5665, 37.5665, "", SearchSortType.RECENT_DESC, false, 1, 30
         );
 
         List<Store> storeList = IntStream.range(1, 31)
