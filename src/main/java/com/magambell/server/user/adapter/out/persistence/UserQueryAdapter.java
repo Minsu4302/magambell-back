@@ -10,7 +10,9 @@ import com.magambell.server.user.app.port.out.UserQueryPort;
 import com.magambell.server.user.app.port.out.dto.MyPageStatsDTO;
 import com.magambell.server.user.app.port.out.dto.UserInfoDTO;
 import com.magambell.server.user.domain.entity.User;
+import com.magambell.server.user.domain.enums.UserRole;
 import com.magambell.server.user.domain.repository.UserRepository;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
@@ -60,5 +62,10 @@ public class UserQueryAdapter implements UserQueryPort {
     @Override
     public MyPageStatsDTO getMyPageData(final User user) {
         return userRepository.getMyPageData(user.getId());
+    }
+
+    @Override
+    public List<Long> findActiveUserIdsByRole(final UserRole userRole) {
+        return userRepository.findActiveUserIdsByRole(userRole);
     }
 }

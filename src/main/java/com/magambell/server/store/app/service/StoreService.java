@@ -7,6 +7,7 @@ import com.magambell.server.common.s3.S3InputPort;
 import com.magambell.server.region.app.port.out.RegionQueryPort;
 import com.magambell.server.region.domain.entity.Region;
 import com.magambell.server.review.adapter.out.persistence.ReviewListResponse;
+import com.magambell.server.notification.app.port.in.NotificationUseCase;
 import com.magambell.server.store.adapter.in.web.StoreImagesRegister;
 import com.magambell.server.store.adapter.out.persistence.*;
 import com.magambell.server.store.app.port.in.StoreUseCase;
@@ -40,6 +41,7 @@ public class StoreService implements StoreUseCase {
     private final UserQueryPort userQueryPort;
     private final RegionQueryPort regionQueryPort;
     private final S3InputPort s3InputPort;
+    private final NotificationUseCase notificationUseCase;
 
     @Transactional
     @Override
@@ -62,7 +64,9 @@ public class StoreService implements StoreUseCase {
     @Transactional
     @Override
     public void storeApprove(final StoreApproveServiceRequest request) {
+        Store store = storeQueryPort.findById(request.id());
         storeCommandPort.storeApprove(request.id());
+        notificationUseCase.notifyStoreApproved(store.getUser());
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.magambell.server.notification.app.port.in.request.NotifyStoreOpenRequ
 import com.magambell.server.notification.app.port.in.request.SaveFcmTokenServiceRequest;
 import com.magambell.server.notification.app.port.in.request.SaveStoreOpenFcmTokenServiceRequest;
 import com.magambell.server.user.domain.entity.User;
+import com.magambell.server.user.domain.enums.UserRole;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -29,4 +30,8 @@ public interface NotificationUseCase {
     boolean checkUserStoreOpen(CheckStoreOpenServiceRequest request);
 
     void notifyPickup(LocalDateTime pickupTime);
+
+    void notifyNewSignupStoreReview(UserRole userRole);
+
+    void notifyStoreApproved(User user);
 }

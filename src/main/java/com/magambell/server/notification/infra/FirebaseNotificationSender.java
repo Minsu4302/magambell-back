@@ -6,6 +6,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -13,22 +14,30 @@ import org.springframework.stereotype.Component;
 @Component
 public class FirebaseNotificationSender {
 
-    private static final String UNIFIED_NOTIFICATION_TITLE = "바이트픽";
-
     public void send(String fcmToken, String title, String body) throws FirebaseMessagingException {
-        log.info("FCM 알림 전송 시작 - token: {}, title: {}, body: {}", fcmToken, UNIFIED_NOTIFICATION_TITLE, body);
-        Message message = Message.builder()
+        send(fcmToken, title, body, Map.of());
+    }
+
+    public void send(String fcmToken, String title, String body, Map<String, String> data)
+            throws FirebaseMessagingException {
+        log.info("FCM 알림 전송 시작 - token: {}, title: {}, body: {}", fcmToken, title, body);
+        Message.Builder messageBuilder = Message.builder()
                 .setToken(fcmToken)
                 .setNotification(Notification.builder()
-                        .setTitle(UNIFIED_NOTIFICATION_TITLE)
+                        .setTitle(title)
                         .setBody(body)
                         .build())
-            .setApnsConfig(ApnsConfig.builder()
-                .setAps(Aps.builder()
-                    .setSound("default")
-                    .build())
-                .build())
-                .build();
+                .setApnsConfig(ApnsConfig.builder()
+                        .setAps(Aps.builder()
+                                .setSound("default")
+                                .build())
+                        .build());
+
+        if (data != null && !data.isEmpty()) {
+            messageBuilder.putAllData(data);
+        }
+
+        Message message = messageBuilder.build();
 
         String messageId = FirebaseMessaging.getInstance().send(message);
         log.info("FCM 알림 전송 성공 - token: {}, messageId: {}", fcmToken, messageId);

@@ -1,6 +1,7 @@
 package com.magambell.server.store.domain.repository;
 
 import com.magambell.server.goods.adapter.in.web.GoodsImagesRegister;
+import com.magambell.server.goods.domain.enums.SaleStatus;
 import com.magambell.server.review.domain.enums.ReviewStatus;
 import com.magambell.server.store.adapter.out.persistence.StoreDetailResponse;
 import com.magambell.server.store.app.port.in.request.CloseStoreListServiceRequest;
@@ -17,6 +18,7 @@ import com.magambell.server.store.domain.enums.Approved;
 import com.magambell.server.store.domain.enums.SearchSortType;
 import com.magambell.server.user.domain.enums.UserStatus;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
@@ -28,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -556,11 +559,20 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     private OrderSpecifier<?>[] sortCondition(SearchSortType sortType, NumberExpression<Double> distance) {
+        long dailySeed = LocalDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDate().toEpochDay();
+        OrderSpecifier<Integer> openStoreFirst = new CaseBuilder()
+                .when(goods.saleStatus.eq(SaleStatus.ON).and(stock.quantity.gt(0))).then(0)
+                .otherwise(1)
+                .asc();
+        OrderSpecifier<Double> randomOrder = Expressions
+                .numberTemplate(Double.class, "abs(sin({0} + {1}))", store.id, dailySeed)
+                .asc();
+
         if (sortType == null) {
-            return new OrderSpecifier[]{store.createdAt.desc().nullsLast(), store.id.desc()};
+            return new OrderSpecifier[]{openStoreFirst, randomOrder, store.id.desc()};
         }
         if (sortType == SearchSortType.RECENT_DESC) {
-            return new OrderSpecifier[]{store.createdAt.desc().nullsLast(), store.id.desc()};
+            return new OrderSpecifier[]{openStoreFirst, randomOrder, store.id.desc()};
         }
         if (sortType == SearchSortType.DISTANCE_ASC) {
             if (distance == null) {

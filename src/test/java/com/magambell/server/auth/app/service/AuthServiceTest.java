@@ -45,6 +45,7 @@ class AuthServiceTest {
 
     @Autowired
     private UserCommandPort userCommandPort;
+
     private AuthService testService;
 
     @BeforeEach

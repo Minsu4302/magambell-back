@@ -7,7 +7,10 @@ import com.magambell.server.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.nio.charset.StandardCharsets;
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -15,6 +18,7 @@ import java.util.List;
 public class S3Adapter implements S3InputPort {
 
     private static final String SSL = "https://";
+    private static final int MAX_EXTENSION_LENGTH = 10;
     private final S3Client s3Client;
 
     @Value("${spring.aws.cf}")
@@ -85,14 +89,16 @@ public class S3Adapter implements S3InputPort {
     @Override
     public String getImagePrefix(final String imagePrefix, final ImageRegister imageRegisters,
                                  final User user) {
+        String normalizedKey = normalizeImageKey(imageRegisters.key());
         return imagePrefix + "/" + user.getUserRole() + "/" + user.getId() + "/" + imageRegisters.id() + "_"
-                + imageRegisters.key();
+            + normalizedKey;
     }
 
     @Override
     public String getImagePrefix(final String imagePrefix, final ImageRegister imageRegisters, final Long id) {
+        String normalizedKey = normalizeImageKey(imageRegisters.key());
         return imagePrefix + "/" + id + "/" + imageRegisters.id() + "_"
-                + imageRegisters.key();
+            + normalizedKey;
     }
 
     @Override
@@ -123,9 +129,74 @@ public class S3Adapter implements S3InputPort {
                     return path.startsWith("/") ? path.substring(1) : path;
                 }
             } catch (IllegalArgumentException ignored) {
-                return imagePathOrKey;
+                return stripQueryAndFragment(imagePathOrKey);
             }
         }
-        return imagePathOrKey;
+        return stripQueryAndFragment(imagePathOrKey);
+    }
+
+    private String normalizeImageKey(final String imagePathOrKey) {
+        if (imagePathOrKey == null || imagePathOrKey.isBlank()) {
+            return "image";
+        }
+
+        String objectKey = extractObjectKey(imagePathOrKey);
+        String fileName = extractFileName(objectKey);
+        String extension = extractSafeExtension(fileName);
+        return sha256Hex(objectKey) + extension;
+    }
+
+    private String extractFileName(final String objectKey) {
+        int lastSlashIndex = objectKey.lastIndexOf('/');
+        if (lastSlashIndex >= 0 && lastSlashIndex < objectKey.length() - 1) {
+            return objectKey.substring(lastSlashIndex + 1);
+        }
+        return objectKey;
+    }
+
+    private String extractSafeExtension(final String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex <= 0 || dotIndex >= fileName.length() - 1) {
+            return "";
+        }
+
+        String extension = fileName.substring(dotIndex);
+        if (extension.length() > MAX_EXTENSION_LENGTH) {
+            return "";
+        }
+        return extension.matches("\\.[A-Za-z0-9]+") ? extension : "";
+    }
+
+    private String sha256Hex(final String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder builder = new StringBuilder(hashed.length * 2);
+            for (byte b : hashed) {
+                builder.append(String.format("%02x", b));
+            }
+            return builder.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm is not available", e);
+        }
+    }
+
+    private String stripQueryAndFragment(final String value) {
+        int queryIndex = value.indexOf('?');
+        int fragmentIndex = value.indexOf('#');
+
+        int cutIndex = -1;
+        if (queryIndex >= 0 && fragmentIndex >= 0) {
+            cutIndex = Math.min(queryIndex, fragmentIndex);
+        } else if (queryIndex >= 0) {
+            cutIndex = queryIndex;
+        } else if (fragmentIndex >= 0) {
+            cutIndex = fragmentIndex;
+        }
+
+        if (cutIndex >= 0) {
+            return value.substring(0, cutIndex);
+        }
+        return value;
     }
 }

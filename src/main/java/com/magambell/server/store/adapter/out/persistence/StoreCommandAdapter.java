@@ -21,6 +21,7 @@ import com.magambell.server.store.domain.entity.StoreImage;
 import com.magambell.server.store.domain.repository.OpenRegionRepository;
 import com.magambell.server.store.domain.repository.StoreRepository;
 import com.magambell.server.user.domain.entity.User;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -105,7 +106,7 @@ public class StoreCommandAdapter implements StoreCommandPort {
 
     private String resolveImageKey(final StoreImagesRegister register) {
         if (register.key() != null && !register.key().isBlank()) {
-            return register.key();
+            return extractKeyFromUrl(register.key());
         }
         return extractKeyFromUrl(register.imageUrl());
     }
@@ -114,11 +115,44 @@ public class StoreCommandAdapter implements StoreCommandPort {
         if (imageUrl == null || imageUrl.isBlank()) {
             return "";
         }
-        int lastSlashIndex = imageUrl.lastIndexOf('/');
-        if (lastSlashIndex >= 0 && lastSlashIndex < imageUrl.length() - 1) {
-            return imageUrl.substring(lastSlashIndex + 1);
+
+        String candidate = imageUrl;
+        try {
+            URI uri = URI.create(imageUrl);
+            String path = uri.getPath();
+            if (path != null && !path.isBlank()) {
+                candidate = path;
+            } else {
+                candidate = stripQueryAndFragment(imageUrl);
+            }
+        } catch (IllegalArgumentException ignored) {
+            candidate = stripQueryAndFragment(imageUrl);
         }
-        return imageUrl;
+
+        int lastSlashIndex = candidate.lastIndexOf('/');
+        if (lastSlashIndex >= 0 && lastSlashIndex < candidate.length() - 1) {
+            return candidate.substring(lastSlashIndex + 1);
+        }
+        return candidate;
+    }
+
+    private String stripQueryAndFragment(final String value) {
+        int queryIndex = value.indexOf('?');
+        int fragmentIndex = value.indexOf('#');
+
+        int cutIndex = -1;
+        if (queryIndex >= 0 && fragmentIndex >= 0) {
+            cutIndex = Math.min(queryIndex, fragmentIndex);
+        } else if (queryIndex >= 0) {
+            cutIndex = queryIndex;
+        } else if (fragmentIndex >= 0) {
+            cutIndex = fragmentIndex;
+        }
+
+        if (cutIndex >= 0) {
+            return value.substring(0, cutIndex);
+        }
+        return value;
     }
 
     @Override

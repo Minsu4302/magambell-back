@@ -38,7 +38,7 @@ public class AuthService implements AuthUseCase {
 
     public AuthService(final List<OAuthClient> oAuthClients, final UserQueryPort userQueryPort,
                        final UserCommandPort userCommandPort,
-                       final JwtService jwtService) {
+                   final JwtService jwtService) {
         this.oAuthClientMap = oAuthClients.stream()
                 .collect(Collectors.toMap(OAuthClient::getProviderType, Function.identity()));
         this.userQueryPort = userQueryPort;

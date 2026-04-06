@@ -13,11 +13,13 @@ import com.magambell.server.auth.domain.ProviderType;
 import com.magambell.server.order.domain.enums.OrderStatus;
 import com.magambell.server.user.app.port.out.dto.MyPageStatsDTO;
 import com.magambell.server.user.app.port.out.dto.UserInfoDTO;
+import com.magambell.server.user.domain.enums.UserRole;
 import com.magambell.server.user.domain.enums.UserStatus;
 import com.magambell.server.user.domain.entity.User;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
@@ -109,5 +111,17 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         double savedKg = Math.round(totalPaid * 0.0003 * 10.0) / 10.0;
 
         return new MyPageStatsDTO(purchaseCount, savedKg, savedPrice);
+    }
+
+    @Override
+    public List<Long> findActiveUserIdsByRole(final UserRole userRole) {
+        return queryFactory
+                .select(user.id)
+                .from(user)
+                .where(
+                        user.userRole.eq(userRole),
+                        user.userStatus.eq(UserStatus.ACTIVE)
+                )
+                .fetch();
     }
 }

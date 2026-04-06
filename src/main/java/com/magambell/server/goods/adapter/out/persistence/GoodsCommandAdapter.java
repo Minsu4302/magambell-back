@@ -17,6 +17,7 @@ import com.magambell.server.goods.domain.repository.GoodsRepository;
 import com.magambell.server.store.domain.entity.Store;
 import lombok.RequiredArgsConstructor;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +82,7 @@ public class GoodsCommandAdapter implements GoodsCommandPort {
         // 요청 이미지 처리
         for (int i = 0; i < goodsImagesRegisters.size(); i++) {
             GoodsImagesRegister register = goodsImagesRegisters.get(i);
-            String requestKey = register.key();
+            String requestKey = resolveImageKey(register);
 
             // 기존 이미지인지 확인
             if (existingImageMap.containsKey(requestKey)) {
@@ -100,7 +101,7 @@ public class GoodsCommandAdapter implements GoodsCommandPort {
                 existingImageMap.remove(requestKey);
             } else {
                 // 새 이미지 - S3 업로드 필요
-                newImagesToUpload.add(new ImageRegister(register.id(), register.key()));
+                newImagesToUpload.add(new ImageRegister(register.id(), requestKey));
                 newImageIndexMap.put(newImagesToUpload.size() - 1, register);
             }
         }
@@ -136,16 +137,55 @@ public class GoodsCommandAdapter implements GoodsCommandPort {
         return new EditGoodsImageResponseDTO(goods.getId(), goodsPreSignedUrlImages);
     }
 
-    private String extractKeyFromUrl(String imageUrl) {
-        // URL에서 key 추출 (예: https://d8l60k7no0sr8.cloudfront.net/GOODS/123/1_image.jpg -> 1_image.jpg)
-        if (imageUrl == null || imageUrl.isEmpty()) {
+    private String resolveImageKey(final GoodsImagesRegister register) {
+        if (register.key() != null && !register.key().isBlank()) {
+            return extractKeyFromUrl(register.key());
+        }
+        return extractKeyFromUrl(register.imageUrl());
+    }
+
+    private String extractKeyFromUrl(final String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
             return "";
         }
-        int lastSlashIndex = imageUrl.lastIndexOf('/');
-        if (lastSlashIndex >= 0 && lastSlashIndex < imageUrl.length() - 1) {
-            return imageUrl.substring(lastSlashIndex + 1);
+
+        String candidate = imageUrl;
+        try {
+            URI uri = URI.create(imageUrl);
+            String path = uri.getPath();
+            if (path != null && !path.isBlank()) {
+                candidate = path;
+            } else {
+                candidate = stripQueryAndFragment(imageUrl);
+            }
+        } catch (IllegalArgumentException ignored) {
+            candidate = stripQueryAndFragment(imageUrl);
         }
-        return imageUrl;
+
+        int lastSlashIndex = candidate.lastIndexOf('/');
+        if (lastSlashIndex >= 0 && lastSlashIndex < candidate.length() - 1) {
+            return candidate.substring(lastSlashIndex + 1);
+        }
+        return candidate;
+    }
+
+    private String stripQueryAndFragment(final String value) {
+        int queryIndex = value.indexOf('?');
+        int fragmentIndex = value.indexOf('#');
+
+        int cutIndex = -1;
+        if (queryIndex >= 0 && fragmentIndex >= 0) {
+            cutIndex = Math.min(queryIndex, fragmentIndex);
+        } else if (queryIndex >= 0) {
+            cutIndex = queryIndex;
+        } else if (fragmentIndex >= 0) {
+            cutIndex = fragmentIndex;
+        }
+
+        if (cutIndex >= 0) {
+            return value.substring(0, cutIndex);
+        }
+        return value;
     }
 
 

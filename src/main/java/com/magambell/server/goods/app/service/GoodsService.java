@@ -21,6 +21,7 @@ import com.magambell.server.store.app.port.out.StoreQueryPort;
 import com.magambell.server.store.domain.entity.Store;
 import com.magambell.server.user.app.port.out.UserQueryPort;
 import com.magambell.server.user.domain.entity.User;
+import com.magambell.server.user.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,8 +49,12 @@ public class GoodsService implements GoodsUseCase {
         Store store = storeQueryPort.getStoreByUserWithLock(user)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.STORE_NOT_FOUND));
         existGoods(store);
+        GoodsImagesResponse response = new GoodsImagesResponse(
+            goodsCommandPort.registerGoods(request.toDTO(store)).goodsPreSignedUrlImages()
+        );
+        notificationUseCase.notifyNewSignupStoreReview(UserRole.OWNER);
 
-        return new GoodsImagesResponse(goodsCommandPort.registerGoods(request.toDTO(store)).goodsPreSignedUrlImages());
+        return response;
     }
 
     @Transactional
