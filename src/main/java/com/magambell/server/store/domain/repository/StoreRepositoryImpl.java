@@ -1,7 +1,10 @@
 package com.magambell.server.store.domain.repository;
 
 import com.magambell.server.goods.adapter.in.web.GoodsImagesRegister;
+import com.magambell.server.goods.domain.entity.QGoods;
 import com.magambell.server.goods.domain.enums.SaleStatus;
+import com.magambell.server.order.domain.entity.QOrderGoods;
+import com.magambell.server.review.domain.entity.QReview;
 import com.magambell.server.review.domain.enums.ReviewStatus;
 import com.magambell.server.store.adapter.out.persistence.StoreDetailResponse;
 import com.magambell.server.store.app.port.in.request.CloseStoreListServiceRequest;
@@ -20,11 +23,13 @@ import com.magambell.server.user.domain.enums.UserStatus;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -587,7 +592,21 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
             return new OrderSpecifier[]{review.rating.avg().desc().nullsLast(), store.id.desc()};
         }
         if (sortType == SearchSortType.POPULAR_DESC) {
-            return new OrderSpecifier[]{review.id.countDistinct().desc().nullsLast(), store.id.desc()};
+            QReview reviewSub = new QReview("reviewSub");
+            QOrderGoods orderGoodsSub = new QOrderGoods("orderGoodsSub");
+            QGoods goodsSub = new QGoods("goodsSub");
+
+            Expression<Long> reviewCountPerStore = JPAExpressions
+                .select(reviewSub.id.countDistinct())
+                .from(reviewSub)
+                .join(orderGoodsSub).on(orderGoodsSub.id.eq(reviewSub.orderGoods.id))
+                .join(goodsSub).on(goodsSub.id.eq(orderGoodsSub.goods.id))
+                .where(
+                    goodsSub.store.id.eq(store.id),
+                    reviewSub.reviewStatus.eq(ReviewStatus.ACTIVE)
+                );
+
+            return new OrderSpecifier[]{new OrderSpecifier<>(com.querydsl.core.types.Order.DESC, reviewCountPerStore), store.id.desc()};
         }
         return new OrderSpecifier[]{store.createdAt.desc().nullsLast(), store.id.desc()};
     }
