@@ -10,6 +10,9 @@ public record SearchStoreListRequest(
         String keyword,
     String sortType,
     String sort,
+    String sortBy,
+    String orderBy,
+    String sortOption,
         Boolean onlyAvailable,
 
         @Positive(message = "페이지를 선택해 주세요.")
@@ -31,13 +34,11 @@ public record SearchStoreListRequest(
     }
 
     private SearchSortType resolveSortType() {
-        SearchSortType parsedSortType = parseSort(sortType);
-        if (parsedSortType != null) {
-            return parsedSortType;
-        }
-        SearchSortType parsedSort = parseSort(sort);
-        if (parsedSort != null) {
-            return parsedSort;
+        for (String candidate : java.util.List.of(sortType, sort, sortBy, orderBy, sortOption)) {
+            SearchSortType parsed = parseSort(candidate);
+            if (parsed != null) {
+                return parsed;
+            }
         }
         return null;
     }
