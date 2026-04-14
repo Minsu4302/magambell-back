@@ -161,6 +161,24 @@ class NotificationServiceTest {
         assertThat(remainStoreOpenSubscriptions).isZero();
     }
 
+    @DisplayName("매장 오픈 알림 신청자 수를 집계한다.")
+    @Test
+    void getStoreOpenSubscriberCount() {
+        // given
+        notificationService.saveStoreOpenToken(
+                new SaveStoreOpenFcmTokenServiceRequest(store.getId(), "token-1", user.getId()));
+
+        User anotherUser = createAndSaveUser("count@test.com", "countSocialId", "카운트닉", "01011112222");
+        notificationService.saveStoreOpenToken(
+                new SaveStoreOpenFcmTokenServiceRequest(store.getId(), "token-2", anotherUser.getId()));
+
+        // when
+        long subscriberCount = notificationService.getStoreOpenSubscriberCount(store.getId());
+
+        // then
+        assertThat(subscriberCount).isEqualTo(2L);
+    }
+
     private User createAndSaveUser(final String email, final String socialId, final String nickName,
             final String phoneNumber) {
         UserSocialAccountDTO userSocialAccountDTO = new UserSocialAccountDTO(
