@@ -261,4 +261,56 @@ class GoodsServiceTest {
         assertThat(goodsList).hasSize(1);
         assertThat(goodsList.get(0).getSaleStatus()).isEqualTo(SaleStatus.OFF);
     }
+
+        @DisplayName("주문으로 재고가 0이 되면 자동으로 판매 상태가 OFF로 변경된다")
+        @Test
+        void recordDecrease_whenStockBecomesZero_changeSaleStatusToOff() {
+                // given
+                RegisterGoodsDTO dto = new RegisterGoodsDTO(
+                                "상품명",
+                                LocalDateTime.of(2025, 1, 1, 9, 0),
+                                LocalDateTime.of(2025, 1, 1, 18, 0),
+                                2, 10000, 10, 9000,
+                                store,
+                                List.of(new GoodsImagesRegister(0, "test", "https://test.com/test.jpg", "상품명"))
+                );
+                Goods goods = dto.toGoods();
+                store.addGoods(goods);
+                Goods savedGoods = goodsRepository.save(goods);
+
+                savedGoods.changeStatus(user, SaleStatus.ON, LocalDateTime.of(2025, 1, 1, 10, 0));
+
+                // when
+                savedGoods.getStock().recordDecrease(savedGoods, 2);
+
+                // then
+                assertThat(savedGoods.getStockQuantity()).isEqualTo(0);
+                assertThat(savedGoods.getSaleStatus()).isEqualTo(SaleStatus.OFF);
+        }
+
+        @DisplayName("주문 후 재고가 남아 있으면 판매 상태는 ON을 유지한다")
+        @Test
+        void recordDecrease_whenStockRemains_keepSaleStatusOn() {
+                // given
+                RegisterGoodsDTO dto = new RegisterGoodsDTO(
+                                "상품명",
+                                LocalDateTime.of(2025, 1, 1, 9, 0),
+                                LocalDateTime.of(2025, 1, 1, 18, 0),
+                                3, 10000, 10, 9000,
+                                store,
+                                List.of(new GoodsImagesRegister(0, "test", "https://test.com/test.jpg", "상품명"))
+                );
+                Goods goods = dto.toGoods();
+                store.addGoods(goods);
+                Goods savedGoods = goodsRepository.save(goods);
+
+                savedGoods.changeStatus(user, SaleStatus.ON, LocalDateTime.of(2025, 1, 1, 10, 0));
+
+                // when
+                savedGoods.getStock().recordDecrease(savedGoods, 1);
+
+                // then
+                assertThat(savedGoods.getStockQuantity()).isEqualTo(2);
+                assertThat(savedGoods.getSaleStatus()).isEqualTo(SaleStatus.ON);
+        }
 }

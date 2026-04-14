@@ -69,6 +69,10 @@ public class Stock extends BaseTimeEntity {
         decrease(amount);
         int afterQuantity = this.quantity;
 
+        if (afterQuantity == 0) {
+            goods.changeSaleStatusToOffBySystem();
+        }
+
         StockHistory stockHistory = StockHistory.create(ORDER, beforeQuantity, amount, afterQuantity);
         goods.addStockHistory(stockHistory);
 
