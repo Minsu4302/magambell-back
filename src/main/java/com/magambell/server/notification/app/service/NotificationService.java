@@ -102,6 +102,12 @@ public class NotificationService implements NotificationUseCase {
         return notificationQueryPort.existsByUserAndStore(user, store);
     }
 
+    @Override
+    public long getStoreOpenSubscriberCount(final Long storeId) {
+        Store store = storeQueryPort.findById(storeId);
+        return notificationQueryPort.countStoreOpenSubscribers(store);
+    }
+
     @Transactional
     @Override
     public void saveToken(final SaveFcmTokenServiceRequest request) {

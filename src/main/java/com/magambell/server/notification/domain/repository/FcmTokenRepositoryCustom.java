@@ -6,6 +6,8 @@ import java.util.List;
 public interface FcmTokenRepositoryCustom {
     List<FcmTokenDTO> findWithAllByStoreId(Long storeId);
 
+    long countDistinctActiveUsersByStoreId(Long storeId);
+
     FcmTokenDTO findWithAllByUserIdAndStoreIsNull(Long userId);
 
     List<FcmTokenDTO> findWithAllByUsersIdsAndStoreIsNull(List<Long> userList);

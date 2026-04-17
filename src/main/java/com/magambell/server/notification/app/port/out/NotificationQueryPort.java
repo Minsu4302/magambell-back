@@ -10,6 +10,8 @@ import java.util.Set;
 public interface NotificationQueryPort {
     boolean existsByUserAndStore(User user, Store store);
 
+    long countStoreOpenSubscribers(Store store);
+
     List<FcmTokenDTO> findWithAllByStoreId(Store store);
 
     FcmTokenDTO findWithAllByUserIdAndStoreIsNull(User user);

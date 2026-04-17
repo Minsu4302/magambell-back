@@ -29,6 +29,8 @@ public interface NotificationUseCase {
 
     boolean checkUserStoreOpen(CheckStoreOpenServiceRequest request);
 
+    long getStoreOpenSubscriberCount(Long storeId);
+
     void notifyPickup(LocalDateTime pickupTime);
 
     void notifyNewSignupStoreReview(UserRole userRole);

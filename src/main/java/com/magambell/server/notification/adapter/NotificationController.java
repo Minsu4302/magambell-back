@@ -7,6 +7,7 @@ import com.magambell.server.notification.adapter.in.web.CheckStoreOpenServiceReq
 import com.magambell.server.notification.adapter.in.web.SaveFcmTokenRequest;
 import com.magambell.server.notification.adapter.in.web.SaveStoreOpenFcmTokenRequest;
 import com.magambell.server.notification.adapter.out.persistence.CheckUserStoreOpenNotificationResponse;
+import com.magambell.server.notification.adapter.out.persistence.StoreOpenSubscriberCountResponse;
 import com.magambell.server.notification.app.port.in.NotificationUseCase;
 import com.magambell.server.notification.app.port.in.request.DeleteStoreOpenFcmTokenServiceRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -99,5 +100,17 @@ public class NotificationController {
         boolean exists = notificationUseCase.checkUserStoreOpen(new CheckStoreOpenServiceRequest(storeId,
                 customUserDetails.userId()));
         return new Response<>(new CheckUserStoreOpenNotificationResponse(exists));
+    }
+
+    @Operation(summary = "매장 오픈 알림 신청자 수 조회")
+    @ApiResponse(responseCode = "200", content = {
+            @Content(schema = @Schema(implementation = StoreOpenSubscriberCountResponse.class))})
+    @GetMapping("/store/{storeId}/subscribers")
+    public Response<StoreOpenSubscriberCountResponse> getStoreOpenSubscriberCount(
+            @PathVariable Long storeId,
+            @AuthenticationPrincipal final CustomUserDetails customUserDetails
+    ) {
+        long subscriberCount = notificationUseCase.getStoreOpenSubscriberCount(storeId);
+        return new Response<>(new StoreOpenSubscriberCountResponse(subscriberCount));
     }
 }
