@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/review/rating").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/service-areas").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/banner/images").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/notification/store/*/subscribers").permitAll()
                         .requestMatchers("/admin")
                         .hasRole(UserRole.ADMIN.name())
                         .anyRequest()
