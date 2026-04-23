@@ -5,9 +5,11 @@ import com.magambell.server.common.exception.DuplicateException;
 import com.magambell.server.common.exception.NotFoundException;
 import com.magambell.server.goods.adapter.in.web.GoodsImagesRegister;
 import com.magambell.server.goods.adapter.out.persistence.GoodsImagesResponse;
+import com.magambell.server.goods.adapter.out.persistence.GoodsQuantityResponse;
 import com.magambell.server.goods.app.port.in.GoodsUseCase;
 import com.magambell.server.goods.app.port.in.request.ChangeGoodsStatusServiceRequest;
 import com.magambell.server.goods.app.port.in.request.EditGoodsImagesServiceRequest;
+import com.magambell.server.goods.app.port.in.request.EditGoodsQuantityServiceRequest;
 import com.magambell.server.goods.app.port.in.request.EditGoodsServiceRequest;
 import com.magambell.server.goods.app.port.in.request.RegisterGoodsServiceRequest;
 import com.magambell.server.goods.app.port.out.GoodsCommandPort;
@@ -93,6 +95,14 @@ public class GoodsService implements GoodsUseCase {
         return new GoodsImagesResponse(editGoodsImageResponseDTO.goodsPreSignedUrlImages());
 
 
+    }
+
+    @Transactional
+    @Override
+    public GoodsQuantityResponse editGoodsQuantity(final EditGoodsQuantityServiceRequest request) {
+        Goods goods = goodsQueryPort.findOwnedGoodsWithRelations(request.goodsId(), request.userId());
+        int beforeQuantity = goods.editQuantity(request.quantity());
+        return new GoodsQuantityResponse(goods.getId(), beforeQuantity, goods.getStockQuantity(), LocalDateTime.now());
     }
 
     @Transactional

@@ -150,6 +150,21 @@ public class Goods extends BaseTimeEntity {
         this.addStockHistory(stockHistory);
     }
 
+    public int editQuantity(final Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new InvalidRequestException(ErrorCode.STOCK_INVALID_QUANTITY);
+        }
+
+        int beforeQuantity = this.stock.getQuantity();
+        if (!quantity.equals(beforeQuantity)) {
+            StockHistory stockHistory = StockHistory.create(StockType.MANUAL, beforeQuantity, quantity, quantity);
+            this.stock.editQuantity(quantity);
+            this.addStockHistory(stockHistory);
+        }
+
+        return beforeQuantity;
+    }
+
     public void changeSaleStatusToOffBySystem() {
         this.saleStatus = OFF;
     }
