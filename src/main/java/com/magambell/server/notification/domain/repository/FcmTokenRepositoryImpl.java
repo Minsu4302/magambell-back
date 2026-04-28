@@ -37,14 +37,11 @@ public class FcmTokenRepositoryImpl implements FcmTokenRepositoryCustom {
     }
 
     @Override
-    public long countDistinctActiveUsersByStoreId(final Long storeId) {
+    public long countByStoreId(final Long storeId) {
         Long count = queryFactory
-                .select(fcmToken.user.id.countDistinct())
+                .select(fcmToken.id.count())
                 .from(fcmToken)
-                .innerJoin(user).on(user.id.eq(fcmToken.user.id))
-                .innerJoin(store).on(store.id.eq(fcmToken.store.id))
-                .where(store.id.eq(storeId)
-                        .and(user.userStatus.eq(UserStatus.ACTIVE)))
+                .where(fcmToken.store.id.eq(storeId))
                 .fetchOne();
 
         return count == null ? 0L : count;

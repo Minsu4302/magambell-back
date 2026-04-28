@@ -26,7 +26,7 @@ public class NotificationQueryAdapter implements NotificationQueryPort {
 
     @Override
     public long countStoreOpenSubscribers(final Store store) {
-        return fcmTokenRepository.countDistinctActiveUsersByStoreId(store.getId());
+        return fcmTokenRepository.countByStoreId(store.getId());
     }
 
     @Override

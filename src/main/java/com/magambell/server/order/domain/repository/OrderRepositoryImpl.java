@@ -255,6 +255,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 .innerJoin(store).on(store.id.eq(goods.store.id)).fetchJoin()
                 .innerJoin(owner).on(owner.id.eq(store.user.id)).fetchJoin()
                 .where(
+                        order.orderStatus.eq(OrderStatus.ACCEPTED),
                         order.pickupTime.eq(pickupTime),
                         order.pickupNotificationStatus.eq(PickupNotificationStatus.NOT_SENT),
                         customer.userStatus.eq(UserStatus.ACTIVE),

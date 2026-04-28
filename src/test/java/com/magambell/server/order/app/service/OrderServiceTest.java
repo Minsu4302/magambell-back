@@ -403,6 +403,41 @@ class OrderServiceTest {
         assertThat(result.getRejectReason()).isEqualTo(RejectReason.STORE_ISSUE);
     }
 
+    @DisplayName("거절된 주문은 픽업 알림 대상에서 제외된다.")
+    @Test
+    void rejectedOrderIsExcludedFromPickupNotificationTargets() {
+        // given
+        LocalDateTime pickupTime = LocalDateTime.of(
+                LocalDateTime.now().toLocalDate(),
+                goods.getStartTime().plusMinutes(30).toLocalTime()
+        );
+        CreateOrderServiceRequest createRequest = new CreateOrderServiceRequest(
+                goods.getId(),
+                1,
+                9000,
+                pickupTime,
+                "픽업 알림 제외 테스트"
+        );
+        orderService.createOrder(createRequest, user.getId(), goods.getStartTime().minusMinutes(10));
+
+        Order order = orderRepository.findAll().get(0);
+        order.paid();
+        orderRepository.save(order);
+
+        RejectOrderServiceRequest rejectRequest = new RejectOrderServiceRequest(
+                order.getId(),
+                owner.getId(),
+                RejectReason.STORE_ISSUE
+        );
+
+        // when
+        orderService.rejectOrder(rejectRequest);
+        List<Order> notificationTargets = orderRepository.findOrdersToNotifyByPickupTime(pickupTime);
+
+        // then
+        assertThat(notificationTargets).isEmpty();
+    }
+
     @DisplayName("고객이 주문을 취소하면 재고가 복구되며 결제 취소 요청이 호출된다.")
     @Test
     void cancelOrder() {

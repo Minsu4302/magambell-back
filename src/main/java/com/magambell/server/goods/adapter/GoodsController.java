@@ -4,10 +4,12 @@ import com.magambell.server.common.Response;
 import com.magambell.server.common.security.CustomUserDetails;
 import com.magambell.server.common.swagger.BaseResponse;
 import com.magambell.server.goods.adapter.in.web.ChangeGoodsStatusRequest;
+import com.magambell.server.goods.adapter.in.web.EditGoodsQuantityRequest;
 import com.magambell.server.goods.adapter.in.web.EditGoodsImagesRequest;
 import com.magambell.server.goods.adapter.in.web.EditGoodsRequest;
 import com.magambell.server.goods.adapter.in.web.RegisterGoodsRequest;
 import com.magambell.server.goods.adapter.out.persistence.GoodsImagesResponse;
+import com.magambell.server.goods.adapter.out.persistence.GoodsQuantityResponse;
 import com.magambell.server.goods.app.port.in.GoodsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -67,6 +69,19 @@ public class GoodsController {
 
         return new Response<>(goodsUseCase.editGoods(request.toService(customUserDetails.userId())));
 
+    }
+
+    @PreAuthorize("hasRole('OWNER')")
+    @Operation(summary = "바이트백 재고 변경")
+    @ApiResponse(responseCode = "200", content = {
+            @Content(schema = @Schema(implementation = GoodsQuantityResponse.class))})
+    @PatchMapping("/{goodsId}/quantity")
+    public Response<GoodsQuantityResponse> editGoodsQuantity(
+            @PathVariable final Long goodsId,
+            @RequestBody @Validated final EditGoodsQuantityRequest request,
+            @AuthenticationPrincipal final CustomUserDetails customUserDetails
+    ) {
+        return new Response<>(goodsUseCase.editGoodsQuantity(request.toService(goodsId, customUserDetails.userId())));
     }
 
     @PreAuthorize("hasRole('OWNER')")

@@ -107,8 +107,7 @@ public class NotificationController {
             @Content(schema = @Schema(implementation = StoreOpenSubscriberCountResponse.class))})
     @GetMapping("/store/{storeId}/subscribers")
     public Response<StoreOpenSubscriberCountResponse> getStoreOpenSubscriberCount(
-            @PathVariable Long storeId,
-            @AuthenticationPrincipal final CustomUserDetails customUserDetails
+            @PathVariable Long storeId
     ) {
         long subscriberCount = notificationUseCase.getStoreOpenSubscriberCount(storeId);
         return new Response<>(new StoreOpenSubscriberCountResponse(subscriberCount));
