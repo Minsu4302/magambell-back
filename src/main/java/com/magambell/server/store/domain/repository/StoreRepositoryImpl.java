@@ -135,6 +135,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                                         goods.salePrice,
                                         stock.quantity,
                                         distance != null ? distance : Expressions.nullExpression(Double.class),
+                                        Expressions.nullExpression(Integer.class),
                                         goods.saleStatus
                                 ))
                 );
@@ -379,6 +380,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                                         goods.salePrice,
                                         stock.quantity,
                                         distance != null ? distance : Expressions.nullExpression(Double.class),
+                                        Expressions.nullExpression(Integer.class),
                                         goods.saleStatus
                                 ))
                 );
@@ -447,6 +449,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                         goods.salePrice,
                         stock.quantity,
                         distance != null ? distance : Expressions.nullExpression(Double.class),
+                        Expressions.nullExpression(Integer.class),
                         goods.saleStatus
                     ))
             );

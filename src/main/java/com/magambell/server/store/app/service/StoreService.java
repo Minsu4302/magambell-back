@@ -36,6 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StoreService implements StoreUseCase {
 
+    private static final double WALK_SPEED_KM_PER_HOUR = 4.5d;
+
     private final StoreCommandPort storeCommandPort;
     private final StoreQueryPort storeQueryPort;
     private final UserQueryPort userQueryPort;
@@ -58,7 +60,7 @@ public class StoreService implements StoreUseCase {
     @Override
     public StoreListResponse getStoreList(final SearchStoreListServiceRequest request) {
         return new StoreListResponse(
-                storeQueryPort.getStoreList(request, PageRequest.of(request.page() - 1, request.size())));
+                appendWalkMinutes(storeQueryPort.getStoreList(request, PageRequest.of(request.page() - 1, request.size()))));
     }
 
     @Transactional
@@ -82,12 +84,12 @@ public class StoreService implements StoreUseCase {
 
     @Override
     public StoreListResponse getCloseStoreList(final CloseStoreListServiceRequest request) {
-        return new StoreListResponse(storeQueryPort.getCloseStoreList(request));
+        return new StoreListResponse(appendWalkMinutes(storeQueryPort.getCloseStoreList(request)));
     }
 
     @Override
     public StoreListResponse getMapStoreList(final MapStoreListServiceRequest request) {
-        return new StoreListResponse(storeQueryPort.getMapStoreList(request));
+        return new StoreListResponse(appendWalkMinutes(storeQueryPort.getMapStoreList(request)));
     }
 
     @Override
@@ -183,6 +185,40 @@ public class StoreService implements StoreUseCase {
     private EditStoreImageResponseDTO changeStoreImage(final Store store,
                                                        final List<StoreImagesRegister> storeImagesRegisters) {
         return storeCommandPort.editStoreImage(store, storeImagesRegisters);
+    }
+
+    private List<StoreListDTOResponse> appendWalkMinutes(final List<StoreListDTOResponse> stores) {
+        return stores.stream().map(this::withWalkMinutes).toList();
+    }
+
+    private StoreListDTOResponse withWalkMinutes(final StoreListDTOResponse store) {
+        Integer walkMinutes = calculateWalkMinutes(store.distance());
+        return new StoreListDTOResponse(
+                store.storeId(),
+                store.storeName(),
+                store.ImageUrl(),
+                store.latitude(),
+                store.longitude(),
+                store.address(),
+                store.goodsName(),
+                store.startTime(),
+                store.endTime(),
+                store.originPrice(),
+                store.discount(),
+                store.salePrice(),
+                store.quantity(),
+                store.distance(),
+                walkMinutes,
+                store.saleStatus()
+        );
+    }
+
+    private Integer calculateWalkMinutes(final Double distanceKm) {
+        if (distanceKm == null) {
+            return null;
+        }
+        double minutes = (distanceKm / WALK_SPEED_KM_PER_HOUR) * 60.0d;
+        return (int) Math.ceil(Math.max(0.0d, minutes));
     }
 
     private String encodeCursor(LocalDateTime createdAt, Long storeId) {
