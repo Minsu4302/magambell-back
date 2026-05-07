@@ -4,6 +4,7 @@ import com.magambell.server.common.annotation.Adapter;
 import com.magambell.server.common.enums.ErrorCode;
 import com.magambell.server.common.exception.NotFoundException;
 import com.magambell.server.store.app.port.in.request.CloseStoreListServiceRequest;
+import com.magambell.server.store.app.port.in.request.MapStoreListServiceRequest;
 import com.magambell.server.store.app.port.in.request.OpenRegionListServiceRequest;
 import com.magambell.server.store.app.port.in.request.SearchStoreListServiceRequest;
 import com.magambell.server.store.app.port.in.request.StoreSearchServiceRequest;
@@ -72,6 +73,11 @@ public class StoreQueryAdapter implements StoreQueryPort {
     @Override
     public List<StoreListDTOResponse> getCloseStoreList(final CloseStoreListServiceRequest request) {
         return storeRepository.getCloseStoreList(request);
+    }
+
+    @Override
+    public List<StoreListDTOResponse> getMapStoreList(final MapStoreListServiceRequest request) {
+        return storeRepository.getMapStoreList(request);
     }
 
     @Override

@@ -86,6 +86,11 @@ public class StoreService implements StoreUseCase {
     }
 
     @Override
+    public StoreListResponse getMapStoreList(final MapStoreListServiceRequest request) {
+        return new StoreListResponse(storeQueryPort.getMapStoreList(request));
+    }
+
+    @Override
     public StoreAdminListResponse getWaitingStoreList(final WaitingStoreListServiceRequest request) {
         List<StoreAdminListDTO> waitingStoreList = storeQueryPort.getWaitingStoreList(
             PageRequest.of(request.page() - 1, request.size()));

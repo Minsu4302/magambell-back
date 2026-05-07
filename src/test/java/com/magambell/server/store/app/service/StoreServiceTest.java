@@ -22,6 +22,7 @@ import com.magambell.server.store.adapter.out.persistence.StoreListResponse;
 import com.magambell.server.store.app.port.in.dto.RegisterStoreDTO;
 import com.magambell.server.store.app.port.in.request.CloseStoreListServiceRequest;
 import com.magambell.server.store.app.port.in.request.EditStoreImageServiceRequest;
+import com.magambell.server.store.app.port.in.request.MapStoreListServiceRequest;
 import com.magambell.server.store.app.port.in.request.RegisterStoreServiceRequest;
 import com.magambell.server.store.app.port.in.request.SearchStoreListServiceRequest;
 import com.magambell.server.store.app.port.in.request.WaitingStoreListServiceRequest;
@@ -194,7 +195,7 @@ class StoreServiceTest {
     @Test
     void getCloseStoreList() {
         // given
-        CloseStoreListServiceRequest request = new CloseStoreListServiceRequest(37.6000, 37.5665);
+        CloseStoreListServiceRequest request = new CloseStoreListServiceRequest(37.5665, 37.5665);
 
         List<Store> storeList = IntStream.range(1, 31)
                 .mapToObj(this::createStore)
@@ -208,6 +209,28 @@ class StoreServiceTest {
         // then
         assertThat(closeStoreList.storeListDTOResponses()).hasSize(30);
     }
+
+        @DisplayName("지도 범위 매장 리스트")
+        @Test
+        void getMapStoreList() {
+                // given
+                MapStoreListServiceRequest request = new MapStoreListServiceRequest(
+                                37.5000, 37.5000,
+                                37.7000, 37.7000
+                );
+
+                List<Store> storeList = IntStream.range(1, 31)
+                                .mapToObj(this::createStore)
+                                .toList();
+
+                storeRepository.saveAll(storeList);
+
+                // when
+                StoreListResponse mapStoreList = storeService.getMapStoreList(request);
+
+                // then
+                assertThat(mapStoreList.storeListDTOResponses()).hasSize(30);
+        }
 
     @DisplayName("승인 대기중인 매장 리스트를 가져온다.")
     @Test
