@@ -42,6 +42,11 @@ firebase:
 LOG_PATH: /logs
 APP_NAME: magambell
 
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 ---
 spring:
   config:
