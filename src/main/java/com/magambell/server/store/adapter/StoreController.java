@@ -95,6 +95,16 @@ public class StoreController {
         return new Response<>(storeUseCase.getCloseStoreList(request.toService()));
     }
 
+    @Operation(summary = "지도 범위 매장 리스트")
+    @ApiResponse(responseCode = "200", content = {
+            @Content(schema = @Schema(implementation = StoreListResponse.class))})
+    @GetMapping("/map")
+    public Response<StoreListResponse> getMapStoreList(
+            @ModelAttribute @Validated final MapStoreListRequest request
+    ) {
+        return new Response<>(storeUseCase.getMapStoreList(request.toService()));
+    }
+
     @Operation(summary = "승인 대기중인 매장 리스트")
     @ApiResponse(responseCode = "200", content = {
             @Content(schema = @Schema(implementation = StoreAdminListResponse.class))}

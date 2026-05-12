@@ -19,6 +19,7 @@ public record StoreListDTOResponse(
         Integer salePrice,
         Integer quantity,
         Double distance,
+        Integer walkMinutes,
         SaleStatus saleStatus
 ) {
     public String getStoreId() {

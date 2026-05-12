@@ -8,6 +8,7 @@ import com.magambell.server.review.domain.entity.QReview;
 import com.magambell.server.review.domain.enums.ReviewStatus;
 import com.magambell.server.store.adapter.out.persistence.StoreDetailResponse;
 import com.magambell.server.store.app.port.in.request.CloseStoreListServiceRequest;
+import com.magambell.server.store.app.port.in.request.MapStoreListServiceRequest;
 import com.magambell.server.store.app.port.in.request.SearchStoreListServiceRequest;
 import com.magambell.server.store.app.port.in.request.StoreSearchServiceRequest;
 import com.magambell.server.store.app.port.out.dto.StoreDetailDTO;
@@ -61,6 +62,7 @@ import static com.querydsl.core.types.ExpressionUtils.count;
 public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     private static final Integer LIMIT_KM = 6;
+    private static final Double CLOSE_LIMIT_KM = 3.0;
     private final JPAQueryFactory queryFactory;
 
     @Override
@@ -133,6 +135,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                                         goods.salePrice,
                                         stock.quantity,
                                         distance != null ? distance : Expressions.nullExpression(Double.class),
+                                        Expressions.nullExpression(Integer.class),
                                         goods.saleStatus
                                 ))
                 );
@@ -336,6 +339,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         BooleanBuilder conditions = new BooleanBuilder();
         conditions.and(store.approved.eq(APPROVED));
         conditions.and(user.userStatus.eq(UserStatus.ACTIVE));
+        conditions.and(distance.loe(CLOSE_LIMIT_KM));
 
         List<Long> storeIds = queryFactory
                 .select(store.id)
@@ -376,10 +380,80 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                                         goods.salePrice,
                                         stock.quantity,
                                         distance != null ? distance : Expressions.nullExpression(Double.class),
+                                        Expressions.nullExpression(Integer.class),
                                         goods.saleStatus
                                 ))
                 );
     }
+
+        @Override
+        public List<StoreListDTOResponse> getMapStoreList(final MapStoreListServiceRequest request) {
+        double minLatitude = Math.min(request.swLatitude(), request.neLatitude());
+        double maxLatitude = Math.max(request.swLatitude(), request.neLatitude());
+        double minLongitude = Math.min(request.swLongitude(), request.neLongitude());
+        double maxLongitude = Math.max(request.swLongitude(), request.neLongitude());
+        double centerLatitude = (minLatitude + maxLatitude) / 2.0;
+        double centerLongitude = (minLongitude + maxLongitude) / 2.0;
+
+        NumberExpression<Double> distance = Expressions.numberTemplate(
+            Double.class,
+            "6371 * acos(cos(radians({0})) * cos(radians({1})) * cos(radians({2}) - radians({3})) + sin(radians({0})) * sin(radians({1})))",
+            centerLatitude,
+            store.latitude,
+            centerLongitude,
+            store.longitude
+        );
+
+        BooleanBuilder conditions = new BooleanBuilder();
+        conditions.and(store.approved.eq(APPROVED));
+        conditions.and(user.userStatus.eq(UserStatus.ACTIVE));
+        conditions.and(store.latitude.between(minLatitude, maxLatitude));
+        conditions.and(store.longitude.between(minLongitude, maxLongitude));
+
+        List<Long> storeIds = queryFactory
+            .select(store.id)
+            .from(store)
+            .leftJoin(goods).on(goods.store.id.eq(store.id))
+            .innerJoin(stock).on(stock.goods.id.eq(goods.id))
+            .innerJoin(user).on(user.id.eq(store.user.id))
+            .where(conditions)
+            .groupBy(store.id)
+            .orderBy(distance.asc())
+            .fetch();
+
+        if (storeIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory.select(store, storeImage, goods, stock)
+            .from(store)
+            .leftJoin(storeImage).on(storeImage.store.id.eq(store.id))
+            .leftJoin(goods).on(goods.store.id.eq(store.id))
+            .innerJoin(stock).on(stock.goods.id.eq(goods.id))
+            .where(store.id.in(storeIds))
+            .orderBy(distance.asc())
+            .transform(
+                groupBy(store.id)
+                    .list(Projections.constructor(StoreListDTOResponse.class,
+                        store.id,
+                        store.name,
+                        set(storeImage.name),
+                        store.latitude,
+                        store.longitude,
+                        store.address,
+                        goods.name,
+                        goods.startTime,
+                        goods.endTime,
+                        goods.originalPrice,
+                        goods.discount,
+                        goods.salePrice,
+                        stock.quantity,
+                        distance != null ? distance : Expressions.nullExpression(Double.class),
+                        Expressions.nullExpression(Integer.class),
+                        goods.saleStatus
+                    ))
+            );
+        }
 
     @Override
     public List<StoreAdminListDTO> getWaitingStoreList(final Pageable pageable) {
