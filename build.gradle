@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.11'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+    id 'com.github.spotbugs' version '6.0.0'
 }
 
 group = 'com.magambell'
@@ -105,4 +107,30 @@ sourceSets {
 
 clean {
     delete file(querydslDir)
+}
+
+// ===== JaCoCo 설정 (테스트 커버리지 측정) =====
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+test {
+    jacoco {
+        excludes = ['**/generated/**', '**/config/**', '**/entity/**']
+    }
+    finalizedBy jacocoTestReport
+}
+
+// ===== SpotBugs 설정 (정적 버그 분석) =====
+spotbugs {
+    ignoreFailures = true
 }
