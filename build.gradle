@@ -134,3 +134,7 @@ test {
 spotbugs {
     ignoreFailures = true
 }
+
+spotbugsMain {
+    dependsOn compileJava, processResources
+}
