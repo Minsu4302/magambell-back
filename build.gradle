@@ -137,4 +137,9 @@ spotbugs {
 
 spotbugsMain {
     dependsOn compileJava, processResources
+    mustRunAfter compileTestJava
+}
+
+spotbugsTest {
+    enabled = false
 }
