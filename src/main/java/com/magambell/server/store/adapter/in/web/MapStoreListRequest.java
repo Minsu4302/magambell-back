@@ -14,9 +14,11 @@ public record MapStoreListRequest(
         Double neLatitude,
 
         @NotNull(message = "북동쪽 경도를 입력해 주세요.")
-        Double neLongitude
+        Double neLongitude,
+
+        Boolean onlyAvailable
 ) {
     public MapStoreListServiceRequest toService() {
-        return new MapStoreListServiceRequest(swLatitude, swLongitude, neLatitude, neLongitude);
+        return new MapStoreListServiceRequest(swLatitude, swLongitude, neLatitude, neLongitude, onlyAvailable);
     }
 }

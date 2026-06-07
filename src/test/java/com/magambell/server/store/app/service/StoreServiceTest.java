@@ -41,6 +41,7 @@ import com.magambell.server.user.domain.entity.User;
 import com.magambell.server.user.domain.repository.UserRepository;
 import com.magambell.server.user.domain.repository.UserSocialAccountRepository;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
@@ -215,13 +216,17 @@ class StoreServiceTest {
         void getMapStoreList() {
                 // given
                 MapStoreListServiceRequest request = new MapStoreListServiceRequest(
-                                37.5000, 37.5000,
-                                37.7000, 37.7000
+                        37.3000, 127.1000,
+                        37.3400, 127.1400,
+                        true
                 );
 
                 List<Store> storeList = IntStream.range(1, 31)
-                                .mapToObj(this::createStore)
+                        .mapToObj(this::createMapAvailableStore)
                                 .toList();
+
+                storeList = new java.util.ArrayList<>(storeList);
+                storeList.add(createMapUnavailableStore(99));
 
                 storeRepository.saveAll(storeList);
 
@@ -330,4 +335,62 @@ class StoreServiceTest {
         goods.changeStatus(user, ON, LocalDateTime.of(2025, 1, 1, 8, 0));
         return store;
     }
+
+        private Store createMapAvailableStore(int i) {
+                return createMapStore(i, true, 1);
+        }
+
+        private Store createMapUnavailableStore(int i) {
+                return createMapStore(i, false, 0);
+        }
+
+        private Store createMapStore(int i, boolean available, int quantity) {
+                LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+                UserSocialAccountDTO userSocialAccountDTO = new UserSocialAccountDTO("test-off" + i + "@test.com", "테스트이름", "닉네임",
+                                "01012341234",
+                                ProviderType.KAKAO,
+                                "testOffId" + i, UserRole.OWNER);
+                user = userSocialAccountDTO.toUser();
+                user.addUserSocialAccount(userSocialAccountDTO.toUserSocialAccount());
+
+                RegisterStoreDTO registerStoreDTO = new RegisterStoreDTO(
+                                "비활성 매장" + i,
+                                "서울 강서구 테스트 211",
+                        37.325839945374,
+                        127.125354580751,
+                                "대표이름",
+                                "01012345678",
+                                "123491923",
+                                Bank.KB국민,
+                                "102391485",
+                                List.of(),
+                                Approved.APPROVED,
+                                user,
+                                null,
+                                "주차장"
+                );
+
+                Store store = registerStoreDTO.toEntity();
+                List<ImageRegister> images = registerStoreDTO.toImage();
+                images.forEach(image -> store.addStoreImage(StoreImage.create(image.key(), image.id())));
+
+                RegisterGoodsDTO registerGoodsDTO = new RegisterGoodsDTO(
+                                "상품명",
+                        now.minusHours(1), now.plusHours(1),
+                        quantity, 10000, 10, 9000, store, List.of(new GoodsImagesRegister(0, "test", "https://test.com/test.jpg", "상품명"))
+
+                );
+                user.addStore(store);
+
+                Goods goods = registerGoodsDTO.toGoods();
+                store.addGoods(goods);
+                Stock stock = Stock.create(quantity);
+                goods.addStock(stock);
+
+                userRepository.save(user);
+                if (available) {
+                        goods.changeStatus(user, ON, now);
+                }
+                return store;
+        }
 }

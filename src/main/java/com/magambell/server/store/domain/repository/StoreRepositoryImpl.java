@@ -84,7 +84,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
         BooleanBuilder conditions = new BooleanBuilder();
         Optional.ofNullable(radiusCondition(distance)).ifPresent(conditions::and);
-        Optional.ofNullable(availableNowCondition(request)).ifPresent(conditions::and);
+        Optional.ofNullable(availableNowCondition(request.onlyAvailable())).ifPresent(conditions::and);
         Optional.ofNullable(keywordCondition(request.keyword())).ifPresent(conditions::and);
         conditions.and(store.approved.eq(APPROVED));
         conditions.and(user.userStatus.eq(UserStatus.ACTIVE));
@@ -409,6 +409,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         conditions.and(user.userStatus.eq(UserStatus.ACTIVE));
         conditions.and(store.latitude.between(minLatitude, maxLatitude));
         conditions.and(store.longitude.between(minLongitude, maxLongitude));
+    Optional.ofNullable(availableNowCondition(request.onlyAvailable())).ifPresent(conditions::and);
 
         List<Long> storeIds = queryFactory
             .select(store.id)
@@ -630,8 +631,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         return null;
     }
 
-    private BooleanExpression availableNowCondition(SearchStoreListServiceRequest request) {
-        if (Boolean.TRUE.equals(request.onlyAvailable())) {
+    private BooleanExpression availableNowCondition(Boolean onlyAvailable) {
+        if (Boolean.TRUE.equals(onlyAvailable)) {
             LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
             return stock.quantity.gt(0)
                     .and(goods.saleStatus.eq(SaleStatus.ON))
