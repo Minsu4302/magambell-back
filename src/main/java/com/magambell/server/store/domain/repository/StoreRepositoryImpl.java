@@ -35,6 +35,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
@@ -254,8 +255,10 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 )
                 .fetchOne();
 
-        return Optional.of(
-                updatedDTO.toResponse(aggregation.get(0, Long.class), aggregation.get(1, Double.class)));
+        Long reviewCount = (aggregation != null) ? aggregation.get(0, Long.class) : null;
+        Double averageRating = (aggregation != null) ? aggregation.get(1, Double.class) : null;
+
+        return Optional.of(updatedDTO.toResponse(reviewCount, averageRating));
     }
 
     @Override
@@ -379,7 +382,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                                         goods.discount,
                                         goods.salePrice,
                                         stock.quantity,
-                                        distance != null ? distance : Expressions.nullExpression(Double.class),
+                                        distance,
                                         Expressions.nullExpression(Integer.class),
                                         goods.saleStatus
                                 ))
@@ -449,7 +452,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                         goods.discount,
                         goods.salePrice,
                         stock.quantity,
-                        distance != null ? distance : Expressions.nullExpression(Double.class),
+                        distance,
                         Expressions.nullExpression(Integer.class),
                         goods.saleStatus
                     ))
@@ -782,7 +785,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     
     private CursorData decodeCursor(String cursor) {
         try {
-            String decoded = new String(Base64.getDecoder().decode(cursor));
+            String decoded = new String(Base64.getDecoder().decode(cursor), StandardCharsets.UTF_8);
             String[] parts = decoded.split("_");
             if (parts.length == 2) {
                 LocalDateTime createdAt = LocalDateTime.parse(parts[0]);
