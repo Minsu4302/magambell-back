@@ -7,4 +7,7 @@ public record StoreSearchResponse(
         String nextCursor,
         Boolean hasNext
 ) {
+    public StoreSearchResponse {
+        stores = List.copyOf(stores);
+    }
 }

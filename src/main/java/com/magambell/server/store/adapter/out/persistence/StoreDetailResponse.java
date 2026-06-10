@@ -29,4 +29,8 @@ public record StoreDetailResponse(
         List<GoodsImagesRegister> goodsImages
 
 ) {
+    public StoreDetailResponse {
+        images = Set.copyOf(images);
+        goodsImages = List.copyOf(goodsImages);
+    }
 }

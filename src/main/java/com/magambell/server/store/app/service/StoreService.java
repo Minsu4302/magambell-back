@@ -20,6 +20,7 @@ import com.magambell.server.store.domain.entity.Store;
 import com.magambell.server.user.app.port.out.UserQueryPort;
 import com.magambell.server.user.domain.enums.UserRole;
 import com.magambell.server.user.domain.entity.User;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.LinkedHashSet;
@@ -223,7 +224,7 @@ public class StoreService implements StoreUseCase {
 
     private String encodeCursor(LocalDateTime createdAt, Long storeId) {
         String cursorString = createdAt.toString() + "_" + storeId;
-        return Base64.getEncoder().encodeToString(cursorString.getBytes());
+        return Base64.getEncoder().encodeToString(cursorString.getBytes(StandardCharsets.UTF_8));
     }
 
         private OwnerStoreDetailDTO convertOwnerStoreImageUrls(final OwnerStoreDetailDTO ownerStoreDetailDTO) {

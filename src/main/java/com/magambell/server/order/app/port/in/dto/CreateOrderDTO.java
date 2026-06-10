@@ -8,6 +8,8 @@ import com.magambell.server.order.domain.entity.OrderGoods;
 import com.magambell.server.user.domain.entity.User;
 import java.time.LocalDateTime;
 
+// JPA 엔티티를 그대로 전달하는 내부 커맨드 객체이므로 방어 복사 대신 경고 억제
+@SuppressWarnings({"EI_EXPOSE_REP2", "EI_EXPOSE_REP"})
 public record CreateOrderDTO(
         User user,
         Goods goods,

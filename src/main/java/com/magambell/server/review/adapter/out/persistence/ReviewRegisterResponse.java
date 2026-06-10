@@ -7,4 +7,7 @@ public record ReviewRegisterResponse(
         String id,
         List<ReviewPreSignedUrlImage> reviewPreSignedUrlImages
 ) {
+    public ReviewRegisterResponse {
+        reviewPreSignedUrlImages = List.copyOf(reviewPreSignedUrlImages);
+    }
 }
