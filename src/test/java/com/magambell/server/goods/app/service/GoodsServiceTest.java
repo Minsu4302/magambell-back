@@ -313,4 +313,62 @@ class GoodsServiceTest {
                 assertThat(savedGoods.getStockQuantity()).isEqualTo(2);
                 assertThat(savedGoods.getSaleStatus()).isEqualTo(SaleStatus.ON);
         }
+
+    @DisplayName("이미 ON 상태인 상품을 다시 ON으로 변경하면 알림을 전송하지 않는다")
+    @Test
+    void changeGoodsStatus_alreadyOn_skipsNotification() throws FirebaseMessagingException {
+        RegisterGoodsDTO dto = new RegisterGoodsDTO(
+                "상품명",
+                LocalDateTime.of(2025, 1, 1, 9, 0),
+                LocalDateTime.of(2025, 1, 1, 18, 0),
+                3, 10000, 10, 9000,
+                store,
+                List.of(new GoodsImagesRegister(0, "test", "https://test.com/test.jpg", "상품명"))
+        );
+        Goods dtoGoods = dto.toGoods();
+        store.addGoods(dtoGoods);
+        Goods savedGoods = goodsRepository.save(dtoGoods);
+
+        // OFF → ON (첫 번째 변경, wasOff=true 경로)
+        LocalDateTime t1 = LocalDateTime.of(2025, 1, 1, 10, 0);
+        goodsService.changeGoodsStatus(
+                new ChangeGoodsStatusServiceRequest(savedGoods.getId(), SaleStatus.ON, user.getId()), t1);
+
+        // ON → ON (두 번째 변경, wasOff=false 경로 — 알림 없음)
+        LocalDateTime t2 = LocalDateTime.of(2025, 1, 1, 11, 0);
+        goodsService.changeGoodsStatus(
+                new ChangeGoodsStatusServiceRequest(savedGoods.getId(), SaleStatus.ON, user.getId()), t2);
+
+        List<Goods> goodsList = goodsRepository.findAll();
+        assertThat(goodsList.get(0).getSaleStatus()).isEqualTo(SaleStatus.ON);
+    }
+
+    @DisplayName("ON → OFF 상태 변경 시 알림이 전송되지 않는다")
+    @Test
+    void changeGoodsStatus_onToOff_noNotification() {
+        RegisterGoodsDTO dto = new RegisterGoodsDTO(
+                "상품명",
+                LocalDateTime.of(2025, 1, 1, 9, 0),
+                LocalDateTime.of(2025, 1, 1, 18, 0),
+                3, 10000, 10, 9000,
+                store,
+                List.of(new GoodsImagesRegister(0, "test", "https://test.com/test.jpg", "상품명"))
+        );
+        Goods dtoGoods = dto.toGoods();
+        store.addGoods(dtoGoods);
+        Goods savedGoods = goodsRepository.save(dtoGoods);
+
+        // OFF → ON
+        goodsService.changeGoodsStatus(
+                new ChangeGoodsStatusServiceRequest(savedGoods.getId(), SaleStatus.ON, user.getId()),
+                LocalDateTime.of(2025, 1, 1, 10, 0));
+
+        // ON → OFF (wasOff=false, saleStatus=OFF → 두 조건 모두 false)
+        goodsService.changeGoodsStatus(
+                new ChangeGoodsStatusServiceRequest(savedGoods.getId(), SaleStatus.OFF, user.getId()),
+                LocalDateTime.of(2025, 1, 1, 11, 0));
+
+        List<Goods> goodsList = goodsRepository.findAll();
+        assertThat(goodsList.get(0).getSaleStatus()).isEqualTo(SaleStatus.OFF);
+    }
 }

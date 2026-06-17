@@ -197,7 +197,7 @@ public class StoreService implements StoreUseCase {
         return new StoreListDTOResponse(
                 store.storeId(),
                 store.storeName(),
-                store.ImageUrl(),
+                store.imageUrl(),
                 store.latitude(),
                 store.longitude(),
                 store.address(),
@@ -255,7 +255,7 @@ public class StoreService implements StoreUseCase {
         }
 
         private StoreAdminListDTO convertAdminStoreImageUrls(final StoreAdminListDTO storeAdminListDTO) {
-        LinkedHashSet<String> storeImageUrls = storeAdminListDTO.ImageUrl().stream()
+        LinkedHashSet<String> storeImageUrls = storeAdminListDTO.imageUrl().stream()
             .filter(Objects::nonNull)
             .map(s3InputPort::getReadUrl)
             .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));

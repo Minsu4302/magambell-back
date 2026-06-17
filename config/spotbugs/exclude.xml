@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+
+    <!--
+        EI / EI2: Exposed Internal Representation — 프로젝트 전체 오탐 억제
+
+        이 프로젝트는 Hexagonal Architecture를 사용하며,
+        아래 두 가지 이유로 EI/EI2는 모두 의도된 설계입니다.
+
+        1. JPA 엔티티 (domain.entity)
+           - @OneToMany/@ManyToOne 등 ORM 연관관계는 가변 참조 공유가 필수
+           - Hibernate 프록시 객체에 방어 복사를 적용하면 영속성 컨텍스트가 깨짐
+
+        2. Port/Adapter 레이어 DTO·Record·Request·Response
+           - record 타입의 컬렉션 필드는 레이어 간 데이터 전달 목적
+           - Spring DI 주입 의존성은 프레임워크가 수명주기 관리 (싱글톤 빈)
+    -->
+
+    <!-- 1. JPA 엔티티 패키지 -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\..*\.domain\.entity\..*"/>
+    </Match>
+
+    <!-- 2. Port 레이어 (DTO / Request / Response / port 하위 전체) -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\..*\.app\.port\..*"/>
+    </Match>
+
+    <!-- 3. Application 서비스 레이어 -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\..*\.app\.service\..*"/>
+    </Match>
+
+    <!-- 4. Application 스케줄러 -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\..*\.app\.scheduler\..*"/>
+    </Match>
+
+    <!-- 5. Adapter 레이어 전체 (in/out, web/persistence) -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\..*\.adapter\..*"/>
+    </Match>
+
+    <!-- 6. Banner 모듈 오탈자 패키지 (adaper) -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\.banner\.adaper\..*"/>
+    </Match>
+
+    <!-- 7. JPA QueryDSL 레포지토리 구현체 -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\..*\.domain\.repository\..*"/>
+    </Match>
+
+    <!-- 8. Spring 공통 설정·시큐리티·유틸 -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\.common\..*"/>
+    </Match>
+
+    <!-- 9. 외부 연동 인프라 (OAuth, FCM 등) -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\..*\.infra\..*"/>
+    </Match>
+
+    <!-- 10. ServiceArea 등 패키지 직하위 컴포넌트 -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\.servicearea\..*"/>
+    </Match>
+
+    <!-- 11. Notification 모듈 app 직하위 -->
+    <Match>
+        <Bug code="EI,EI2"/>
+        <Class name="~com\.magambell\.server\.notification\.app\..*"/>
+    </Match>
+
+</FindBugsFilter>

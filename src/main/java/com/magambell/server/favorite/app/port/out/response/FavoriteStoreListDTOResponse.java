@@ -8,7 +8,7 @@ public record FavoriteStoreListDTOResponse(
         Long storeId,
         String storeName,
         String address,
-        List<String> ImageUrl,
+        List<String> imageUrl,
         String goodsName,
         LocalDateTime startTime,
         LocalDateTime endTime,
