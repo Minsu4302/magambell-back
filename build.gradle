@@ -125,7 +125,7 @@ jacocoTestReport {
 
 test {
     jacoco {
-        excludes = ['**/generated/**', '**/config/**', '**/entity/**']
+        excludes = ['**/generated/**', '**/config/**']
     }
     finalizedBy jacocoTestReport
 }
