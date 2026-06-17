@@ -53,13 +53,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (TokenExpiredException e) {
             log.warn("JWT 만료됨: {}", e.getMessage());
             ErrorResponseUtility.writeErrorResponse(request, response, e);
-        } catch (NullPointerException e) {
-            log.warn("token is null {}", e.getMessage());
-            ErrorResponseUtility.writeErrorResponse(request, response);
         } catch (CustomException e) {
             log.warn("JWT 유효성 실패: {}", e.getMessage());
             ErrorResponseUtility.writeErrorResponse(request, response, e);
-
         }
     }
 

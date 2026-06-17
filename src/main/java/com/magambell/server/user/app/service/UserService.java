@@ -50,8 +50,7 @@ public class UserService implements UserUseCase {
     @Override
     public void login(final LoginServiceRequest request) {
         String password = SecurityUtility.encodePassword(request.password());
-        User user = userQueryPort.getUser(request.email(), password);
-
+        userQueryPort.getUser(request.email(), password);
     }
 
     @Override

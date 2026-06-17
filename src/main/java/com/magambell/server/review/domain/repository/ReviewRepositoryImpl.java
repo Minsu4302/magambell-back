@@ -91,6 +91,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                     case 1 -> rating1 = count;
                     case 2 -> rating2 = count;
                     case 3 -> rating3 = count;
+                    default -> { /* 3점 평점 시스템: 1~3 외 값은 무시 */ }
                 }
             }
         }
