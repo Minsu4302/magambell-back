@@ -9,7 +9,7 @@ import java.util.Set;
 public record StoreAdminListDTO(
         Long storeId,
         String storeName,
-    @JsonProperty("storeImages") Set<String> ImageUrl,
+    @JsonProperty("storeImages") Set<String> imageUrl,
         Double latitude,
         Double longitude,
         String address,

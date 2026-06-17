@@ -7,7 +7,7 @@ import java.util.Set;
 public record StoreListDTOResponse(
         Long storeId,
         String storeName,
-        Set<String> ImageUrl,
+        Set<String> imageUrl,
         Double latitude,
         Double longitude,
         String address,

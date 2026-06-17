@@ -133,6 +133,7 @@ test {
 // ===== SpotBugs 설정 (정적 버그 분석) =====
 spotbugs {
     ignoreFailures = true
+    excludeFilter = file('config/spotbugs/exclude.xml')
 }
 
 spotbugsMain {

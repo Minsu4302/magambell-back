@@ -46,8 +46,7 @@ public class OpenRegion extends BaseTimeEntity {
     private User user;
 
     @Builder(access = AccessLevel.PRIVATE)
-    public OpenRegion(String region, Region regionEntity, User user) {
-        this.region = region; // 기존 데이터 호환성
+    public OpenRegion(Region regionEntity, User user) {
         this.regionEntity = regionEntity;
         this.user = user;
     }
