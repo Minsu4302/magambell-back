@@ -190,6 +190,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 .select(storeImage.name)
                 .from(storeImage)
                 .where(storeImage.store.id.eq(storeId))
+                .orderBy(storeImage.id.asc())
                 .fetch();
         
         // goodsImages 조회 (goods가 있는 경우만)
@@ -222,7 +223,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 storeDetail.storeName(),
                 storeDetail.address(),
             storeDetail.description(),
-                storeImages.isEmpty() ? Collections.emptySet() : Set.copyOf(storeImages),
+                storeImages.isEmpty() ? Collections.emptySet() : new java.util.LinkedHashSet<>(storeImages),
                 storeDetail.startTime(),
                 storeDetail.endTime(),
                 storeDetail.originalPrice(),

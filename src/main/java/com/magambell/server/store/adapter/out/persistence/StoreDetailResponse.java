@@ -30,7 +30,7 @@ public record StoreDetailResponse(
 
 ) {
     public StoreDetailResponse {
-        images = Set.copyOf(images);
+        images = images == null ? new java.util.LinkedHashSet<>() : new java.util.LinkedHashSet<>(images);
         goodsImages = List.copyOf(goodsImages);
     }
 }
