@@ -7,7 +7,7 @@ import java.util.Set;
 public record StoreListDTOResponse(
         Long storeId,
         String storeName,
-        Set<String> imageUrl,
+        Set<String> ImageUrl,
         Double latitude,
         Double longitude,
         String address,
@@ -23,7 +23,7 @@ public record StoreListDTOResponse(
         SaleStatus saleStatus
 ) {
     public StoreListDTOResponse {
-        imageUrl = imageUrl == null ? Set.of() : imageUrl;
+        ImageUrl = ImageUrl == null ? Set.of() : ImageUrl;
     }
     public String getStoreId() {
         return String.valueOf(storeId);

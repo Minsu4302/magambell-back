@@ -8,7 +8,7 @@ public record FavoriteStoreListDTOResponse(
         Long storeId,
         String storeName,
         String address,
-        List<String> imageUrl,
+        List<String> ImageUrl,
         String goodsName,
         LocalDateTime startTime,
         LocalDateTime endTime,
@@ -19,7 +19,7 @@ public record FavoriteStoreListDTOResponse(
         SaleStatus saleStatus
 ) {
     public FavoriteStoreListDTOResponse {
-        imageUrl = imageUrl == null ? List.of() : imageUrl;
+        ImageUrl = ImageUrl == null ? List.of() : ImageUrl;
     }
     public String getStoreId() {
         return String.valueOf(storeId);

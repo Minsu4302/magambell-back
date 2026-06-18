@@ -9,7 +9,7 @@ import java.util.Set;
 public record StoreAdminListDTO(
         Long storeId,
         String storeName,
-    @JsonProperty("storeImages") Set<String> imageUrl,
+    @JsonProperty("storeImages") Set<String> ImageUrl,
         Double latitude,
         Double longitude,
         String address,
@@ -59,7 +59,7 @@ public record StoreAdminListDTO(
     }
 
     public StoreAdminListDTO {
-        imageUrl = imageUrl == null ? Set.of() : imageUrl;
+        ImageUrl = ImageUrl == null ? Set.of() : ImageUrl;
         goodsImageList = goodsImageList == null ? Set.of() : goodsImageList;
     }
 
