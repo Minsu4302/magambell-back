@@ -22,6 +22,9 @@ public record StoreListDTOResponse(
         Integer walkMinutes,
         SaleStatus saleStatus
 ) {
+    public StoreListDTOResponse {
+        imageUrl = imageUrl == null ? Set.of() : imageUrl;
+    }
     public String getStoreId() {
         return String.valueOf(storeId);
     }

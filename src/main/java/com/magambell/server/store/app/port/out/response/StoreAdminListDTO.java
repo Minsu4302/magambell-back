@@ -58,6 +58,11 @@ public record StoreAdminListDTO(
         }
     }
 
+    public StoreAdminListDTO {
+        imageUrl = imageUrl == null ? Set.of() : imageUrl;
+        goodsImageList = goodsImageList == null ? Set.of() : goodsImageList;
+    }
+
     public String getStoreId() {
         return String.valueOf(storeId);
     }
