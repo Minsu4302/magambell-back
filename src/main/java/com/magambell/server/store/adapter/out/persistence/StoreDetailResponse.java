@@ -29,4 +29,8 @@ public record StoreDetailResponse(
         List<GoodsImagesRegister> goodsImages
 
 ) {
+    public StoreDetailResponse {
+        images = images == null ? new java.util.LinkedHashSet<>() : new java.util.LinkedHashSet<>(images);
+        goodsImages = List.copyOf(goodsImages);
+    }
 }

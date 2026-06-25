@@ -2,6 +2,7 @@ package com.magambell.server.store.app.service;
 
 import static com.magambell.server.goods.domain.enums.SaleStatus.ON;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doNothing;
 
 import com.magambell.server.auth.domain.ProviderType;
@@ -41,6 +42,7 @@ import com.magambell.server.user.domain.entity.User;
 import com.magambell.server.user.domain.repository.UserRepository;
 import com.magambell.server.user.domain.repository.UserSocialAccountRepository;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
@@ -51,6 +53,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import com.magambell.server.common.exception.DuplicateException;
+import com.magambell.server.common.exception.InvalidRequestException;
+import com.magambell.server.store.app.port.in.request.StoreSearchServiceRequest;
+import com.magambell.server.store.app.port.out.response.StoreSearchResponse;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -215,13 +221,17 @@ class StoreServiceTest {
         void getMapStoreList() {
                 // given
                 MapStoreListServiceRequest request = new MapStoreListServiceRequest(
-                                37.5000, 37.5000,
-                                37.7000, 37.7000
+                        37.3000, 127.1000,
+                        37.3400, 127.1400,
+                        true
                 );
 
                 List<Store> storeList = IntStream.range(1, 31)
-                                .mapToObj(this::createStore)
+                        .mapToObj(this::createMapAvailableStore)
                                 .toList();
+
+                storeList = new java.util.ArrayList<>(storeList);
+                storeList.add(createMapUnavailableStore(99));
 
                 storeRepository.saveAll(storeList);
 
@@ -284,6 +294,93 @@ class StoreServiceTest {
         assertThat(storeImageList.storePreSignedUrlImages()).hasSize(0);
     }
 
+    @DisplayName("이미 매장이 있는 사용자가 매장을 또 등록하면 예외가 발생한다")
+    @Test
+    void registerStore_throwsWhenDuplicateStore() {
+        Long userId = user.getId();
+        RegisterStoreServiceRequest request = new RegisterStoreServiceRequest(
+                "테스트 매장",
+                "서울 강서구 테스트 211",
+                37.5665, 37.5665,
+                "대표이름", "01012345678", "123491923",
+                Bank.KB국민, "102391485",
+                List.of(new StoreImagesRegister(0, "test")),
+                null, "주차장"
+        );
+
+        storeService.registerStore(request, userId);
+
+        assertThatThrownBy(() -> storeService.registerStore(request, userId))
+                .isInstanceOf(DuplicateException.class);
+    }
+
+    @DisplayName("ADMIN 권한 사용자는 타인의 매장 이미지 목록을 조회할 수 있다")
+    @Test
+    void getStoreImageList_adminUserCanAccess() {
+        Store store = createStore(1);
+        storeRepository.save(store);
+
+        UserSocialAccountDTO adminDto = new UserSocialAccountDTO(
+                "admin-img@test.com", "관리자", "adminNick", "01099998888",
+                ProviderType.KAKAO, "adminUserId", UserRole.ADMIN);
+        User adminUser = adminDto.toUser();
+        adminUser.addUserSocialAccount(adminDto.toUserSocialAccount());
+        userRepository.save(adminUser);
+
+        StoreImagesResponse result = storeService.getStoreImageList(adminUser.getId(), store.getId());
+
+        assertThat(result).isNotNull();
+    }
+
+    @DisplayName("매장 소유자가 아닌 사용자가 매장 이미지 조회 시 예외가 발생한다")
+    @Test
+    void getStoreImageList_throwsWhenNotOwner() {
+        Store store = createStore(1);
+        storeRepository.save(store);
+
+        UserSocialAccountDTO otherDto = new UserSocialAccountDTO(
+                "other-img@test.com", "다른사용자", "otherNick", "01033334444",
+                ProviderType.KAKAO, "otherUserId", UserRole.OWNER);
+        User otherUser = otherDto.toUser();
+        otherUser.addUserSocialAccount(otherDto.toUserSocialAccount());
+        userRepository.save(otherUser);
+
+        assertThatThrownBy(() -> storeService.getStoreImageList(otherUser.getId(), store.getId()))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @DisplayName("매장 수가 limit보다 적으면 hasNext=false이고 nextCursor가 없다")
+    @Test
+    void searchStores_hasNextFalse_noNextCursor() {
+        List<Store> storeList = IntStream.range(1, 4)
+                .mapToObj(this::createStore)
+                .toList();
+        storeRepository.saveAll(storeList);
+
+        StoreSearchServiceRequest request = new StoreSearchServiceRequest("", "-createdAt", 5, null);
+        StoreSearchResponse result = storeService.searchStores(request);
+
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextCursor()).isNull();
+        assertThat(result.stores()).hasSize(3);
+    }
+
+    @DisplayName("매장 수가 limit를 초과하면 hasNext=true이고 nextCursor가 생성된다")
+    @Test
+    void searchStores_hasNextTrue_nextCursorGenerated() {
+        List<Store> storeList = IntStream.range(1, 7)
+                .mapToObj(this::createStore)
+                .toList();
+        storeRepository.saveAll(storeList);
+
+        StoreSearchServiceRequest request = new StoreSearchServiceRequest("", "-createdAt", 5, null);
+        StoreSearchResponse result = storeService.searchStores(request);
+
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.nextCursor()).isNotNull();
+        assertThat(result.stores()).hasSize(5);
+    }
+
     private Store createStore(int i) {
         UserSocialAccountDTO userSocialAccountDTO = new UserSocialAccountDTO("test" + i + "@test.com", "테스트이름", "닉네임",
                 "01012341234",
@@ -330,4 +427,62 @@ class StoreServiceTest {
         goods.changeStatus(user, ON, LocalDateTime.of(2025, 1, 1, 8, 0));
         return store;
     }
+
+        private Store createMapAvailableStore(int i) {
+                return createMapStore(i, true, 1);
+        }
+
+        private Store createMapUnavailableStore(int i) {
+                return createMapStore(i, false, 0);
+        }
+
+        private Store createMapStore(int i, boolean available, int quantity) {
+                LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+                UserSocialAccountDTO userSocialAccountDTO = new UserSocialAccountDTO("test-off" + i + "@test.com", "테스트이름", "닉네임",
+                                "01012341234",
+                                ProviderType.KAKAO,
+                                "testOffId" + i, UserRole.OWNER);
+                user = userSocialAccountDTO.toUser();
+                user.addUserSocialAccount(userSocialAccountDTO.toUserSocialAccount());
+
+                RegisterStoreDTO registerStoreDTO = new RegisterStoreDTO(
+                                "비활성 매장" + i,
+                                "서울 강서구 테스트 211",
+                        37.325839945374,
+                        127.125354580751,
+                                "대표이름",
+                                "01012345678",
+                                "123491923",
+                                Bank.KB국민,
+                                "102391485",
+                                List.of(),
+                                Approved.APPROVED,
+                                user,
+                                null,
+                                "주차장"
+                );
+
+                Store store = registerStoreDTO.toEntity();
+                List<ImageRegister> images = registerStoreDTO.toImage();
+                images.forEach(image -> store.addStoreImage(StoreImage.create(image.key(), image.id())));
+
+                RegisterGoodsDTO registerGoodsDTO = new RegisterGoodsDTO(
+                                "상품명",
+                        now.minusHours(1), now.plusHours(1),
+                        quantity, 10000, 10, 9000, store, List.of(new GoodsImagesRegister(0, "test", "https://test.com/test.jpg", "상품명"))
+
+                );
+                user.addStore(store);
+
+                Goods goods = registerGoodsDTO.toGoods();
+                store.addGoods(goods);
+                Stock stock = Stock.create(quantity);
+                goods.addStock(stock);
+
+                userRepository.save(user);
+                if (available) {
+                        goods.changeStatus(user, ON, now);
+                }
+                return store;
+        }
 }

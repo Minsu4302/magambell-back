@@ -24,6 +24,11 @@ public record OrderListDTO(
         Integer discount,
         Boolean isReviewWritten
 ) {
+    public OrderListDTO {
+        imageUrls = imageUrls == null ? Set.of() : imageUrls;
+        goodsList = goodsList == null ? List.of() : goodsList;
+        reviewIds = reviewIds == null ? Set.of() : reviewIds;
+    }
     public record OrderGoodsInfo(
             Long orderGoodsId,
             String goodsName,

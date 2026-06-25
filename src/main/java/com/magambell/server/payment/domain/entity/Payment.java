@@ -57,20 +57,17 @@ public class Payment extends BaseTimeEntity {
     private Order order;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private Payment(final String transactionId, final String merchantUid, final String payType,
+    private Payment(final String merchantUid, final String payType,
                     final String easyPayProvider, final String cardName,
                     final Integer amount, final PaymentStatus paymentStatus,
-                    final LocalDateTime paidAt,
                     final String failReason,
                     final String cancelReason) {
-        this.transactionId = transactionId;
         this.merchantUid = merchantUid;
         this.payType = payType;
         this.easyPayProvider = easyPayProvider;
         this.cardName = cardName;
         this.amount = amount;
         this.paymentStatus = paymentStatus;
-        this.paidAt = paidAt;
         this.failReason = failReason;
         this.cancelReason = cancelReason;
     }

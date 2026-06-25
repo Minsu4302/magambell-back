@@ -13,6 +13,9 @@ public record StoreSearchItemDTO(
         String description,
         LocalDateTime createdAt
 ) {
+    public StoreSearchItemDTO {
+        imageUrls = imageUrls == null ? Set.of() : imageUrls;
+    }
     public String getStoreId() {
         return String.valueOf(storeId);
     }

@@ -14,6 +14,9 @@ public record ReviewListDTO(
         Long storeId,
         String storeName
 ) {
+    public ReviewListDTO {
+        imageUrls = imageUrls == null ? Set.of() : imageUrls;
+    }
     public String getReviewId() {
         return String.valueOf(reviewId);
     }

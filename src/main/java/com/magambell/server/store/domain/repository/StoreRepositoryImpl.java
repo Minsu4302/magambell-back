@@ -35,6 +35,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
@@ -84,7 +85,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
         BooleanBuilder conditions = new BooleanBuilder();
         Optional.ofNullable(radiusCondition(distance)).ifPresent(conditions::and);
-        Optional.ofNullable(availableNowCondition(request)).ifPresent(conditions::and);
+        Optional.ofNullable(availableNowCondition(request.onlyAvailable())).ifPresent(conditions::and);
         Optional.ofNullable(keywordCondition(request.keyword())).ifPresent(conditions::and);
         conditions.and(store.approved.eq(APPROVED));
         conditions.and(user.userStatus.eq(UserStatus.ACTIVE));
@@ -189,6 +190,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 .select(storeImage.name)
                 .from(storeImage)
                 .where(storeImage.store.id.eq(storeId))
+                .orderBy(storeImage.id.asc())
                 .fetch();
         
         // goodsImages 조회 (goods가 있는 경우만)
@@ -221,7 +223,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 storeDetail.storeName(),
                 storeDetail.address(),
             storeDetail.description(),
-                storeImages.isEmpty() ? Collections.emptySet() : Set.copyOf(storeImages),
+                storeImages.isEmpty() ? Collections.emptySet() : new java.util.LinkedHashSet<>(storeImages),
                 storeDetail.startTime(),
                 storeDetail.endTime(),
                 storeDetail.originalPrice(),
@@ -254,8 +256,10 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 )
                 .fetchOne();
 
-        return Optional.of(
-                updatedDTO.toResponse(aggregation.get(0, Long.class), aggregation.get(1, Double.class)));
+        Long reviewCount = (aggregation != null) ? aggregation.get(0, Long.class) : null;
+        Double averageRating = (aggregation != null) ? aggregation.get(1, Double.class) : null;
+
+        return Optional.of(updatedDTO.toResponse(reviewCount, averageRating));
     }
 
     @Override
@@ -379,7 +383,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                                         goods.discount,
                                         goods.salePrice,
                                         stock.quantity,
-                                        distance != null ? distance : Expressions.nullExpression(Double.class),
+                                        distance,
                                         Expressions.nullExpression(Integer.class),
                                         goods.saleStatus
                                 ))
@@ -409,6 +413,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         conditions.and(user.userStatus.eq(UserStatus.ACTIVE));
         conditions.and(store.latitude.between(minLatitude, maxLatitude));
         conditions.and(store.longitude.between(minLongitude, maxLongitude));
+    Optional.ofNullable(availableNowCondition(request.onlyAvailable())).ifPresent(conditions::and);
 
         List<Long> storeIds = queryFactory
             .select(store.id)
@@ -448,7 +453,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                         goods.discount,
                         goods.salePrice,
                         stock.quantity,
-                        distance != null ? distance : Expressions.nullExpression(Double.class),
+                        distance,
                         Expressions.nullExpression(Integer.class),
                         goods.saleStatus
                     ))
@@ -630,8 +635,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         return null;
     }
 
-    private BooleanExpression availableNowCondition(SearchStoreListServiceRequest request) {
-        if (Boolean.TRUE.equals(request.onlyAvailable())) {
+    private BooleanExpression availableNowCondition(Boolean onlyAvailable) {
+        if (Boolean.TRUE.equals(onlyAvailable)) {
             LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
             return stock.quantity.gt(0)
                     .and(goods.saleStatus.eq(SaleStatus.ON))
@@ -781,7 +786,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     
     private CursorData decodeCursor(String cursor) {
         try {
-            String decoded = new String(Base64.getDecoder().decode(cursor));
+            String decoded = new String(Base64.getDecoder().decode(cursor), StandardCharsets.UTF_8);
             String[] parts = decoded.split("_");
             if (parts.length == 2) {
                 LocalDateTime createdAt = LocalDateTime.parse(parts[0]);

@@ -10,6 +10,7 @@ import com.magambell.server.common.exception.InternalServerException;
 import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,16 +35,13 @@ public class FirebaseConfig {
                 return;
             }
             byte[] decoded = Base64.getDecoder().decode(firebaseConfigJson);
-            InputStream serviceAccount = new ByteArrayInputStream(decoded);
-            
-            // Parse project_id from JSON
-            String jsonString = new String(decoded);
+
+            String jsonString = new String(decoded, StandardCharsets.UTF_8);
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(jsonString);
             String projectId = jsonNode.get("project_id").asText();
-            
-            // Reset stream for credentials
-            serviceAccount = new ByteArrayInputStream(decoded);
+
+            InputStream serviceAccount = new ByteArrayInputStream(decoded);
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))

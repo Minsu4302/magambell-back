@@ -17,6 +17,11 @@ public record OwnerStoreDetailDTO(
         String description,
         String parkingDescription
 ) {
+    public OwnerStoreDetailDTO {
+        storeImageUrls = storeImageUrls == null ? Set.of() : storeImageUrls;
+        goodsList = goodsList == null ? List.of() : goodsList;
+        goodsImageList = goodsImageList == null ? List.of() : goodsImageList;
+    }
     public record GoodsInfo(
             Long goodsId,
             String goodsName,

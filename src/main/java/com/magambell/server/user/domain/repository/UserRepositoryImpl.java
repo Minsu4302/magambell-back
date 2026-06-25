@@ -101,11 +101,15 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
             return new MyPageStatsDTO(0, 0.0, 0L);
         }
 
-        int purchaseCount = result.get(order.id.count()) != null ? result.get(order.id.count()).intValue() : 0;
-        long totalPaid = result.get(order.totalPrice.sum()) != null ? result.get(order.totalPrice.sum()) : 0L;
-        long originalTotal =
-                result.get(orderGoods.originalPrice.sum()) != null ? result.get(orderGoods.originalPrice.sum()) : 0L;
-        long saleTotal = result.get(orderGoods.salePrice.sum()) != null ? result.get(orderGoods.salePrice.sum()) : 0L;
+        Long countVal = result.get(order.id.count());
+        Integer totalPaidVal = result.get(order.totalPrice.sum());
+        Integer originalTotalVal = result.get(orderGoods.originalPrice.sum());
+        Integer saleTotalVal = result.get(orderGoods.salePrice.sum());
+
+        int purchaseCount = countVal != null ? countVal.intValue() : 0;
+        long totalPaid = totalPaidVal != null ? totalPaidVal.longValue() : 0L;
+        long originalTotal = originalTotalVal != null ? originalTotalVal.longValue() : 0L;
+        long saleTotal = saleTotalVal != null ? saleTotalVal.longValue() : 0L;
 
         long savedPrice = originalTotal - saleTotal;
         double savedKg = Math.round(totalPaid * 0.0003 * 10.0) / 10.0;

@@ -18,6 +18,9 @@ public record FavoriteStoreListDTOResponse(
         Integer quantity,
         SaleStatus saleStatus
 ) {
+    public FavoriteStoreListDTOResponse {
+        ImageUrl = ImageUrl == null ? List.of() : ImageUrl;
+    }
     public String getStoreId() {
         return String.valueOf(storeId);
     }
